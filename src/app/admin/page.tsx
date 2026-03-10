@@ -128,7 +128,7 @@ export default function AdminPage() {
                                         {selectedAssessment.company}
                                     </h2>
                                     <p className="text-sm text-text-muted mb-6">
-                                        {selectedAssessment.industry} · {selectedAssessment.employees} empleados ·{' '}
+                                        {selectedAssessment.industry} · {selectedAssessment.answers?.generalInfo?.employees || '—'} empleados ·{' '}
                                         {new Date(selectedAssessment.created_at).toLocaleDateString('es-CO', {
                                             year: 'numeric',
                                             month: 'long',
