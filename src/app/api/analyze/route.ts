@@ -5,36 +5,35 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { answers, scores, globalScore } = body;
 
-        const apiKey = process.env.ANTHROPIC_API_KEY;
+        const apiKey = process.env.OPENAI_API_KEY;
 
         if (!apiKey) {
-            // Return a fallback analysis when no API key is configured
             const fallbackAnalysis = generateFallbackAnalysis(answers, scores, globalScore);
             return NextResponse.json({ analysis: fallbackAnalysis });
         }
 
-        // Build context from assessment data
         const assessmentContext = buildAssessmentContext(answers, scores, globalScore);
 
-        // Call Claude API
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
+                'Authorization': `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: 'gpt-4o-mini',
                 max_tokens: 2000,
-                system: `Eres consultor senior en transformación digital industrial.
+                messages: [
+                    {
+                        role: 'system',
+                        content: `Eres consultor senior en transformación digital industrial.
 Analiza el diagnóstico de madurez y genera en español:
 1. Resumen ejecutivo (2 párrafos, tono ejecutivo orientado a ROI)
 2. Top 3 brechas críticas identificadas
 3. Roadmap de 90 días con 3 fases concretas
 4. Próximo paso recomendado (accionable esta semana)
 Tono: directo, concreto, con métricas cuando sea posible.`,
-                messages: [
+                    },
                     {
                         role: 'user',
                         content: assessmentContext,
@@ -45,13 +44,13 @@ Tono: directo, concreto, con métricas cuando sea posible.`,
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Claude API error:', response.status, errorText);
+            console.error('OpenAI API error:', response.status, errorText);
             const fallbackAnalysis = generateFallbackAnalysis(answers, scores, globalScore);
             return NextResponse.json({ analysis: fallbackAnalysis });
         }
 
         const data = await response.json();
-        const analysis = data.content?.[0]?.text || '';
+        const analysis = data.choices?.[0]?.message?.content || '';
 
         // Save to Supabase if configured
         try {

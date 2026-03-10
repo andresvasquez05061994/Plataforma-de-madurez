@@ -62,7 +62,7 @@ export default function AnalysisSection({ analysis, isLoading }: AnalysisSection
                 <div className="text-center py-8">
                     <p className="text-text-muted mb-2">No se pudo generar el análisis</p>
                     <p className="text-xs text-text-light">
-                        Verifica que la API key de Claude esté configurada en las variables de entorno.
+                        Verifica que la API key de OpenAI esté configurada en las variables de entorno.
                     </p>
                 </div>
             )}
