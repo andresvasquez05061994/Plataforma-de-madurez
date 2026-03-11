@@ -6,6 +6,7 @@ import { useAssessmentStore } from '@/store/assessment-store';
 import { IndustryType, ServiceType } from '@/types/assessment';
 import { serviceSections } from '@/data/sections';
 import IACLogo from '@/components/brand/IACLogo';
+import VoiceInput from '@/components/diagnostic/VoiceInput';
 
 const employeeRanges: { key: string; label: string; desc: string }[] = [
     { key: '1-10',    label: '1 – 10',     desc: 'Microempresa' },
@@ -140,16 +141,22 @@ export default function LandingPage() {
             <p className="text-muted text-base mb-10">
                 Comencemos por conocer su organización.
             </p>
-            <input
-                ref={inputRef}
-                type="text"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                placeholder="Ej: Constructora ABC S.A.S."
-                className="tf-input text-xl"
-                onKeyDown={(e) => { if (e.key === 'Enter' && company.trim()) goNext(); }}
-            />
-            <div className="flex justify-end mt-8">
+            <div className="relative">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="Ej: Constructora ABC S.A.S."
+                    className="tf-input text-xl pr-14"
+                    onKeyDown={(e) => { if (e.key === 'Enter' && company.trim()) goNext(); }}
+                />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                    <VoiceInput onTranscript={(t) => setCompany(company ? `${company} ${t}` : t)} />
+                </div>
+            </div>
+            <div className="flex items-center justify-between mt-8">
+                <p className="text-light text-xs">🎤 Puedes dictar el nombre con tu voz</p>
                 {nextBtn(!!company.trim())}
             </div>
         </div>
