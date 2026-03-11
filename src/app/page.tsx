@@ -21,10 +21,10 @@ const industries: { key: IndustryType; label: string; icon: string; desc: string
     { key: 'servicios', label: 'Servicios / BPO', icon: '💼', desc: 'Servicios profesionales y tercerización' },
 ];
 
-const serviceInfo: { key: ServiceType; title: string; icon: string; desc: string; color: string }[] = [
-    { key: 'bim', title: 'BIM', icon: '🏗️', desc: 'Building Information Modeling', color: '#1A1AFF' },
-    { key: 'ia', title: 'IA / RPA', icon: '🤖', desc: 'Inteligencia Artificial y Automatización', color: '#7C3AED' },
-    { key: 'plm', title: 'PLM', icon: '⚙️', desc: 'Product Lifecycle Management', color: '#059669' },
+const serviceInfo: { key: ServiceType; title: string; icon: string; desc: string }[] = [
+    { key: 'bim', title: 'BIM', icon: '🏗️', desc: 'Building Information Modeling' },
+    { key: 'ia', title: 'IA / RPA', icon: '🤖', desc: 'Inteligencia Artificial y Automatización' },
+    { key: 'plm', title: 'PLM', icon: '⚙️', desc: 'Product Lifecycle Management' },
 ];
 
 export default function LandingPage() {
@@ -77,7 +77,7 @@ export default function LandingPage() {
         }
     }, [filterStep]);
 
-    const handleNextStep = () => {
+    const goNext = () => {
         setIsTransitioning(true);
         setTimeout(() => {
             setFilterStep(filterStep + 1);
@@ -85,7 +85,7 @@ export default function LandingPage() {
         }, 300);
     };
 
-    const handlePrevStep = () => {
+    const goBack = () => {
         setIsTransitioning(true);
         setTimeout(() => {
             setFilterStep(filterStep - 1);
@@ -98,178 +98,140 @@ export default function LandingPage() {
         router.push('/diagnostico');
     };
 
-    // Step 0: Company name
+    const stepIndicator = (current: number, total: number) => (
+        <span className="inline-block text-xs font-semibold text-accent tracking-wider mb-6">
+            {current} → {total}
+        </span>
+    );
+
+    const backButton = () => (
+        <button
+            onClick={goBack}
+            className="text-sm text-muted hover:text-foreground transition-colors flex items-center gap-1"
+        >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Atrás
+        </button>
+    );
+
+    const nextBtn = (enabled: boolean, label = 'Continuar', onClick = goNext) => (
+        <button
+            onClick={onClick}
+            disabled={!enabled}
+            className={`px-8 py-3.5 rounded-2xl font-syne font-bold text-sm transition-all duration-300 ${
+                enabled
+                    ? 'bg-accent text-navy-800 shadow-gold hover:shadow-gold-lg hover:scale-[1.02] active:scale-100'
+                    : 'bg-surface-alt text-light cursor-not-allowed'
+            }`}
+        >
+            {label} →
+        </button>
+    );
+
+    const wrapper = `w-full max-w-xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`;
+
+    // ─── Step 0: Company ───
     const renderCompanyStep = () => (
-        <div className={`w-full max-w-xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-            <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
-                    1 / 4
-                </span>
-            </div>
-            <h2 className="font-syne font-bold text-2xl sm:text-3xl text-foreground leading-snug mb-2">
+        <div className={wrapper}>
+            {stepIndicator(1, 4)}
+            <h2 className="font-syne font-extrabold text-3xl sm:text-4xl text-foreground leading-tight mb-3">
                 ¿Cuál es el nombre de su empresa?
             </h2>
-            <p className="text-text-muted text-sm mb-8">
-                Comencemos por conocer su organización para personalizar el diagnóstico.
+            <p className="text-muted text-base mb-10">
+                Comencemos por conocer su organización.
             </p>
-            <div className="relative">
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    placeholder="Ej: Constructora ABC S.A.S."
-                    className="w-full px-5 py-4 bg-surface-white border-2 border-border-light rounded-xl
-                       text-foreground placeholder:text-text-light text-lg
-                       focus:border-accent focus:ring-0 focus:outline-none
-                       transition-all duration-300"
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && company.trim()) handleNextStep();
-                    }}
-                />
-            </div>
-            <div className="flex justify-end mt-6">
-                <button
-                    onClick={handleNextStep}
-                    disabled={!company.trim()}
-                    className={`px-8 py-3 rounded-xl font-syne font-bold text-sm transition-all duration-300
-              ${company.trim()
-                            ? 'bg-accent text-white hover:bg-accent-dark shadow-lg shadow-accent/20 hover:shadow-xl hover:scale-105 active:scale-100'
-                            : 'bg-surface-muted text-text-light cursor-not-allowed'
-                        }`}
-                >
-                    Continuar →
-                </button>
+            <input
+                ref={inputRef}
+                type="text"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="Ej: Constructora ABC S.A.S."
+                className="tf-input text-xl"
+                onKeyDown={(e) => { if (e.key === 'Enter' && company.trim()) goNext(); }}
+            />
+            <div className="flex justify-end mt-8">
+                {nextBtn(!!company.trim())}
             </div>
         </div>
     );
 
-    // Step 1: Employee count
+    // ─── Step 1: Employees ───
     const renderEmployeesStep = () => (
-        <div className={`w-full max-w-xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-            <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
-                    2 / 4
-                </span>
-            </div>
-            <h2 className="font-syne font-bold text-2xl sm:text-3xl text-foreground leading-snug mb-2">
-                ¿Cuántos empleados tiene su organización?
+        <div className={wrapper}>
+            {stepIndicator(2, 4)}
+            <h2 className="font-syne font-extrabold text-3xl sm:text-4xl text-foreground leading-tight mb-3">
+                ¿Cuántos empleados tiene?
             </h2>
-            <p className="text-text-muted text-sm mb-8">
-                Esto nos ayuda a contextualizar el nivel de madurez esperado.
+            <p className="text-muted text-base mb-10">
+                Esto contextualiza el nivel de madurez esperado.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-3">
                 {employeeRanges.map((range) => (
                     <button
                         key={range.key}
-                        onClick={() => {
-                            setEmployees(range.key);
-                            setTimeout(handleNextStep, 350);
-                        }}
-                        className={`text-left p-5 rounded-xl border-2 transition-all duration-300
-                            ${employees === range.key
-                                ? 'bg-accent/5 border-accent shadow-lg shadow-accent/10 scale-[1.01]'
-                                : 'bg-surface-white border-border-light hover:border-accent/30 hover:shadow-md'
-                            }`}
+                        onClick={() => { setEmployees(range.key); setTimeout(goNext, 350); }}
+                        className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${
+                            employees === range.key
+                                ? 'border-accent bg-accent-light shadow-card'
+                                : 'border-border bg-surface hover:border-border-focus hover:shadow-card'
+                        }`}
                     >
-                        <p className={`font-semibold text-base transition-colors ${employees === range.key ? 'text-accent' : 'text-foreground'}`}>
+                        <span className={`font-semibold ${employees === range.key ? 'text-navy-700' : 'text-foreground'}`}>
                             {range.label}
-                        </p>
-                        <p className="text-sm text-text-muted mt-0.5">{range.desc}</p>
-                        {employees === range.key && (
-                            <span className="text-accent text-sm mt-1 inline-block">✓</span>
-                        )}
+                        </span>
+                        <span className="text-muted text-sm ml-3">{range.desc}</span>
                     </button>
                 ))}
             </div>
-            <div className="flex justify-start mt-6">
-                <button
-                    onClick={handlePrevStep}
-                    className="flex items-center gap-1.5 text-sm text-text-muted hover:text-foreground transition-colors"
-                >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    Anterior
-                </button>
-            </div>
+            <div className="flex justify-start mt-8">{backButton()}</div>
         </div>
     );
 
-    // Step 2: Industry selection
+    // ─── Step 2: Industry ───
     const renderIndustryStep = () => (
-        <div className={`w-full max-w-xl mx-auto transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-            <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
-                    3 / 4
-                </span>
-            </div>
-            <h2 className="font-syne font-bold text-2xl sm:text-3xl text-foreground leading-snug mb-2">
-                ¿En qué industria opera su organización?
+        <div className={wrapper}>
+            {stepIndicator(3, 4)}
+            <h2 className="font-syne font-extrabold text-3xl sm:text-4xl text-foreground leading-tight mb-3">
+                ¿En qué industria opera?
             </h2>
-            <p className="text-text-muted text-sm mb-8">
-                Esto nos permite adaptar el lenguaje del diagnóstico a su sector.
+            <p className="text-muted text-base mb-10">
+                Adaptamos el diagnóstico a su sector.
             </p>
             <div className="space-y-3">
                 {industries.map((ind) => (
                     <button
                         key={ind.key}
-                        onClick={() => {
-                            setIndustry(ind.key);
-                            setTimeout(handleNextStep, 400);
-                        }}
-                        className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-300 group
-                ${industry === ind.key
-                                ? 'bg-accent/5 border-accent shadow-lg shadow-accent/10 scale-[1.01]'
-                                : 'bg-surface-white border-border-light hover:border-accent/30 hover:shadow-md'
-                            }`}
+                        onClick={() => { setIndustry(ind.key); setTimeout(goNext, 400); }}
+                        className={`w-full text-left px-5 py-5 rounded-2xl border-2 transition-all duration-200 flex items-center gap-4 ${
+                            industry === ind.key
+                                ? 'border-accent bg-accent-light shadow-card'
+                                : 'border-border bg-surface hover:border-border-focus hover:shadow-card'
+                        }`}
                     >
-                        <div className="flex items-center gap-4">
-                            <span className="text-2xl">{ind.icon}</span>
-                            <div className="flex-1">
-                                <p className={`font-semibold text-base transition-colors ${industry === ind.key ? 'text-accent' : 'text-foreground'
-                                    }`}>
-                                    {ind.label}
-                                </p>
-                                <p className="text-sm text-text-muted mt-0.5">{ind.desc}</p>
-                            </div>
-                            {industry === ind.key && (
-                                <span className="text-accent animate-scale-in text-lg">✓</span>
-                            )}
+                        <span className="text-2xl">{ind.icon}</span>
+                        <div>
+                            <p className={`font-semibold ${industry === ind.key ? 'text-navy-700' : 'text-foreground'}`}>{ind.label}</p>
+                            <p className="text-muted text-sm">{ind.desc}</p>
                         </div>
+                        {industry === ind.key && <span className="ml-auto text-accent text-lg">✓</span>}
                     </button>
                 ))}
             </div>
-            <div className="flex justify-start mt-6">
-                <button
-                    onClick={handlePrevStep}
-                    className="flex items-center gap-1.5 text-sm text-text-muted hover:text-foreground transition-colors"
-                >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    Anterior
-                </button>
-            </div>
+            <div className="flex justify-start mt-8">{backButton()}</div>
         </div>
     );
 
-    // Step 2: Service selection with live sidebar
+    // ─── Step 3: Services ───
     const renderServiceStep = () => (
         <div className={`w-full transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 max-w-5xl mx-auto">
-                {/* Main content */}
+            <div className="flex flex-col lg:flex-row gap-10 max-w-5xl mx-auto">
                 <div className="flex-1 max-w-xl">
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
-                            4 / 4
-                        </span>
-                    </div>
-                    <h2 className="font-syne font-bold text-2xl sm:text-3xl text-foreground leading-snug mb-2">
-                        ¿Qué evaluaciones aplican a su organización?
+                    {stepIndicator(4, 4)}
+                    <h2 className="font-syne font-extrabold text-3xl sm:text-4xl text-foreground leading-tight mb-3">
+                        ¿Qué evaluaciones aplican?
                     </h2>
-                    <p className="text-text-muted text-sm mb-8">
-                        Seleccione los servicios que desea evaluar. Puede elegir uno o varios.
+                    <p className="text-muted text-base mb-10">
+                        Seleccione uno o varios servicios a evaluar.
                     </p>
 
                     <div className="space-y-3">
@@ -279,147 +241,86 @@ export default function LandingPage() {
                                 <button
                                     key={svc.key}
                                     onClick={() => toggleService(svc.key)}
-                                    className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-300 group
-                    ${isSelected
-                                            ? 'border-accent bg-accent/5 shadow-lg shadow-accent/10 scale-[1.01]'
-                                            : 'bg-surface-white border-border-light hover:border-accent/30 hover:shadow-md'
-                                        }`}
+                                    className={`w-full text-left px-5 py-5 rounded-2xl border-2 transition-all duration-200 flex items-center gap-4 ${
+                                        isSelected
+                                            ? 'border-accent bg-accent-light shadow-card'
+                                            : 'border-border bg-surface hover:border-border-focus hover:shadow-card'
+                                    }`}
                                 >
-                                    <div className="flex items-center gap-4">
-                                        {/* Checkbox */}
-                                        <div
-                                            className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 flex-shrink-0
-                        ${isSelected
-                                                    ? 'bg-accent border-accent'
-                                                    : 'border-border-dark group-hover:border-accent/40'
-                                                }`}
-                                        >
-                                            {isSelected && (
-                                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="animate-scale-in">
-                                                    <path d="M3 7l3 3 5-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                                </svg>
-                                            )}
-                                        </div>
-
-                                        <span className="text-2xl">{svc.icon}</span>
-                                        <div className="flex-1">
-                                            <p className={`font-syne font-bold text-lg transition-colors ${isSelected ? 'text-accent' : 'text-foreground'
-                                                }`}>
-                                                {svc.title}
-                                            </p>
-                                            <p className="text-sm text-text-muted">{svc.desc}</p>
-                                        </div>
-                                        <span className="text-xs text-text-light bg-surface-muted px-2 py-1 rounded-full">
-                                            {getCount(svc.key)} preguntas
-                                        </span>
+                                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                                        isSelected ? 'bg-accent border-accent' : 'border-border-focus'
+                                    }`}>
+                                        {isSelected && (
+                                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-6" stroke="#1B2A4A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                        )}
                                     </div>
+                                    <span className="text-2xl">{svc.icon}</span>
+                                    <div className="flex-1">
+                                        <p className={`font-syne font-bold text-lg ${isSelected ? 'text-navy-700' : 'text-foreground'}`}>{svc.title}</p>
+                                        <p className="text-muted text-sm">{svc.desc}</p>
+                                    </div>
+                                    <span className="text-xs text-muted bg-surface-alt px-2.5 py-1 rounded-full">{getCount(svc.key)} preg.</span>
                                 </button>
                             );
                         })}
                     </div>
 
-                    <div className="flex items-center justify-between mt-8">
-                        <button
-                            onClick={handlePrevStep}
-                            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-foreground transition-colors"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            Anterior
-                        </button>
-                        <button
-                            onClick={handleStart}
-                            disabled={selectedServices.length === 0}
-                            className={`px-8 py-3 rounded-xl font-syne font-bold text-sm transition-all duration-300 transform
-                ${selectedServices.length > 0
-                                    ? 'bg-accent text-white hover:bg-accent-dark shadow-xl shadow-accent/25 hover:shadow-2xl hover:scale-105 active:scale-100'
-                                    : 'bg-surface-muted text-text-light cursor-not-allowed'
-                                }`}
-                        >
-                            Comenzar diagnóstico →
-                        </button>
+                    <div className="flex items-center justify-between mt-10">
+                        {backButton()}
+                        {nextBtn(selectedServices.length > 0, 'Comenzar diagnóstico', handleStart)}
                     </div>
                 </div>
 
-                {/* Live sidebar panel */}
+                {/* Sidebar */}
                 <div className="lg:w-72 hidden lg:block">
-                    <div className="sticky top-8 bg-surface-white rounded-2xl border border-border-light p-6 shadow-sm">
-                        <h3 className="font-syne font-bold text-sm text-foreground mb-4 uppercase tracking-wide">
-                            Tu diagnóstico
-                        </h3>
-
-                        {/* Company info */}
-                        <div className="mb-5 pb-5 border-b border-border-light">
-                            <p className="text-xs text-text-light uppercase tracking-wide mb-1">Empresa</p>
-                            <p className="text-sm font-medium text-foreground truncate">{company || '—'}</p>
-                            <p className="text-xs text-text-light uppercase tracking-wide mt-3 mb-1">Empleados</p>
-                            <p className="text-sm font-medium text-foreground">
-                                {employeeRanges.find(r => r.key === employees)?.label || '—'}
-                            </p>
-                            <p className="text-xs text-text-light uppercase tracking-wide mt-3 mb-1">Industria</p>
-                            <p className="text-sm font-medium text-foreground">
-                                {industries.find(i => i.key === industry)?.label || '—'}
-                            </p>
+                    <div className="sticky top-8 bg-surface rounded-3xl border border-border p-6 shadow-card">
+                        <h3 className="font-syne font-bold text-xs text-muted uppercase tracking-widest mb-5">Tu diagnóstico</h3>
+                        <div className="space-y-4 mb-6 pb-6 border-b border-border">
+                            <div>
+                                <p className="text-[10px] text-light uppercase tracking-wider">Empresa</p>
+                                <p className="text-sm font-medium text-foreground truncate">{company || '—'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-light uppercase tracking-wider">Empleados</p>
+                                <p className="text-sm font-medium text-foreground">{employeeRanges.find(r => r.key === employees)?.label || '—'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-light uppercase tracking-wider">Industria</p>
+                                <p className="text-sm font-medium text-foreground">{industries.find(i => i.key === industry)?.label || '—'}</p>
+                            </div>
                         </div>
-
-                        {/* Selected services */}
-                        <div className="mb-5">
-                            <p className="text-xs text-text-light uppercase tracking-wide mb-3">Evaluaciones</p>
-                            {selectedServices.length === 0 ? (
-                                <p className="text-xs text-text-light italic">Ninguna seleccionada</p>
-                            ) : (
-                                <div className="space-y-2">
-                                    {selectedServices.map((svc) => {
-                                        const info = serviceInfo.find(s => s.key === svc);
-                                        return (
-                                            <div key={svc} className="flex items-center gap-2 text-sm animate-scale-in">
-                                                <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
-                                                <span className="font-medium text-foreground">{info?.title}</span>
-                                                <span className="text-text-light text-xs ml-auto">
-                                                    {getCount(svc)}p
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Total question count */}
-                        <div className="bg-accent/5 rounded-xl p-4 text-center">
-                            <p className="text-3xl font-syne font-extrabold text-accent">
-                                {questionCount}
-                            </p>
-                            <p className="text-xs text-text-muted mt-1">
-                                preguntas en total
-                            </p>
-                            {questionCount > 0 && (
-                                <p className="text-xs text-text-light mt-2">
-                                    ~{Math.ceil(questionCount * 0.5)} min estimados
-                                </p>
-                            )}
+                        {selectedServices.length > 0 ? (
+                            <div className="space-y-2 mb-6">
+                                {selectedServices.map((svc) => {
+                                    const info = serviceInfo.find(s => s.key === svc);
+                                    return (
+                                        <div key={svc} className="flex items-center gap-2 text-sm">
+                                            <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
+                                            <span className="font-medium text-foreground">{info?.title}</span>
+                                            <span className="text-light text-xs ml-auto">{getCount(svc)}p</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-light italic mb-6">Ninguna seleccionada</p>
+                        )}
+                        <div className="bg-accent/10 rounded-2xl p-4 text-center">
+                            <p className="text-3xl font-syne font-extrabold text-accent">{questionCount}</p>
+                            <p className="text-xs text-muted mt-1">preguntas · ~{Math.ceil(questionCount * 0.5)} min</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Mobile summary bar */}
             {selectedServices.length > 0 && (
-                <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-surface-white/95 backdrop-blur-md border-t border-border-light px-4 py-3 z-30 animate-slide-up">
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-md border-t border-border px-4 py-3 z-30 animate-slide-up">
                     <div className="flex items-center justify-between max-w-xl mx-auto">
                         <div>
-                            <p className="text-sm font-medium text-foreground">
-                                {selectedServices.length} evaluación{selectedServices.length > 1 ? 'es' : ''}
-                            </p>
-                            <p className="text-xs text-text-muted">
-                                {questionCount} preguntas · ~{Math.ceil(questionCount * 0.5)} min
-                            </p>
+                            <p className="text-sm font-medium text-foreground">{selectedServices.length} evaluación{selectedServices.length > 1 ? 'es' : ''}</p>
+                            <p className="text-xs text-muted">{questionCount} preguntas · ~{Math.ceil(questionCount * 0.5)} min</p>
                         </div>
-                        <button
-                            onClick={handleStart}
-                            className="px-5 py-2.5 rounded-xl font-syne font-bold text-sm bg-accent text-white shadow-lg shadow-accent/20"
-                        >
+                        <button onClick={handleStart} className="px-5 py-2.5 rounded-2xl font-syne font-bold text-sm bg-accent text-navy-800 shadow-gold">
                             Comenzar →
                         </button>
                     </div>
@@ -429,61 +330,44 @@ export default function LandingPage() {
     );
 
     return (
-        <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden">
-            {/* Background removed as per user request to match white logo background */}
-
-
+        <main className="min-h-screen bg-background flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden">
             <div className="w-full relative z-10">
-                {/* Logo (persistent) */}
-                <div className="text-center mb-8 sm:mb-12 animate-fade-in">
-                    <IACLogo size="lg" className="mb-3" />
-                    <p className="text-text-muted text-xs sm:text-sm font-medium tracking-wide uppercase">
+                <div className="text-center mb-10 sm:mb-14 animate-fade-in">
+                    <IACLogo size="lg" className="mb-4" />
+                    <p className="text-muted text-xs sm:text-sm font-medium tracking-widest uppercase">
                         Diagnóstico de Madurez Digital
                     </p>
                 </div>
 
-                {/* Steps */}
                 {filterStep === 0 && renderCompanyStep()}
                 {filterStep === 1 && renderEmployeesStep()}
                 {filterStep === 2 && renderIndustryStep()}
                 {filterStep === 3 && renderServiceStep()}
 
-                {/* Step indicators (on steps 0-2) */}
                 {filterStep < 3 && (
-                    <div className="flex justify-center gap-2 mt-12 animate-fade-in">
+                    <div className="flex justify-center gap-2 mt-14 animate-fade-in">
                         {[0, 1, 2, 3].map((step) => (
                             <div
                                 key={step}
-                                className={`h-1.5 rounded-full transition-all duration-500 ${step === filterStep
-                                    ? 'w-8 bg-accent'
-                                    : step < filterStep
-                                        ? 'w-4 bg-accent/40'
-                                        : 'w-4 bg-border-light'
-                                    }`}
+                                className={`h-1 rounded-full transition-all duration-500 ${
+                                    step === filterStep ? 'w-8 bg-accent' : step < filterStep ? 'w-4 bg-accent/50' : 'w-4 bg-border'
+                                }`}
                             />
                         ))}
                     </div>
                 )}
 
-                {/* Trust indicators (solo en primer paso) */}
                 {filterStep === 0 && (
-                    <div className="text-center mt-16 pt-8 border-t border-border-light animate-fade-in max-w-xl mx-auto" style={{ animationDelay: '0.5s' }}>
-                        <p className="text-text-light text-xs mb-4 uppercase tracking-wider">Metodología basada en</p>
-                        <div className="flex flex-wrap justify-center gap-6 text-text-muted text-sm font-medium">
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 bg-accent rounded-full" />
-                                Marco Gartner
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 bg-accent rounded-full" />
-                                ISO 19650
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 bg-accent rounded-full" />
-                                CMMI
-                            </span>
+                    <div className="text-center mt-16 pt-8 border-t border-border animate-fade-in max-w-xl mx-auto" style={{ animationDelay: '0.5s' }}>
+                        <p className="text-light text-xs mb-4 uppercase tracking-widest">Metodología basada en</p>
+                        <div className="flex flex-wrap justify-center gap-6 text-muted text-sm font-medium">
+                            {['Marco Gartner', 'ISO 19650', 'CMMI'].map(m => (
+                                <span key={m} className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 bg-accent rounded-full" />{m}
+                                </span>
+                            ))}
                         </div>
-                        <p className="text-text-light text-[10px] mt-6 italic">
+                        <p className="text-light text-[10px] mt-6 italic">
                             Ingeniería Asistida por Computador — 30 años elevando la eficiencia de los negocios
                         </p>
                     </div>

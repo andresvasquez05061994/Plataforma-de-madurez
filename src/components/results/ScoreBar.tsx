@@ -29,11 +29,11 @@ export default function ScoreBar({ label, score, level, delay = 0 }: ScoreBarPro
                     <span className="text-2xl font-syne font-bold" style={{ color }}>
                         {score.toFixed(1)}
                     </span>
-                    <span className="text-xs text-text-muted">/5.0</span>
+                    <span className="text-xs text-muted">/5.0</span>
                 </div>
             </div>
 
-            <div className="w-full h-3 bg-surface-muted rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-surface-alt rounded-full overflow-hidden">
                 <div
                     className="h-full rounded-full transition-all duration-1000 ease-out"
                     style={{

@@ -23,23 +23,18 @@ export default function OptionQuestion({
 
     return (
         <div className="w-full max-w-2xl mx-auto animate-fade-in">
-            {/* Question number */}
-            <div className="flex items-center gap-2 mb-4">
-                <span className="text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
-                    {questionNumber} / {totalQuestions}
-                </span>
-            </div>
+            <span className="inline-block text-xs font-semibold text-accent tracking-wider mb-5">
+                {questionNumber} → {totalQuestions}
+            </span>
 
-            {/* Question text */}
             <div className="flex items-start gap-3 mb-8">
-                <h2 className="font-syne font-bold text-xl sm:text-2xl text-foreground leading-snug flex-1">
+                <h2 className="font-syne font-extrabold text-xl sm:text-2xl text-foreground leading-snug flex-1">
                     {question.text}
                 </h2>
                 {question.help && <HelpTooltip text={question.help} />}
             </div>
 
-            {/* Options */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
                 {question.options?.map((option) => {
                     const isSelected = currentValue === option.level;
                     const isHovered = hoveredOption === option.level;
@@ -50,45 +45,28 @@ export default function OptionQuestion({
                             onClick={() => onAnswer(option.level)}
                             onMouseEnter={() => setHoveredOption(option.level)}
                             onMouseLeave={() => setHoveredOption(null)}
-                            className={`
-                w-full text-left p-4 sm:p-5 rounded-xl border-2 transition-all duration-300
-                ${isSelected
-                                    ? 'bg-accent/5 border-accent shadow-lg shadow-accent/10 scale-[1.01]'
+                            className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${
+                                isSelected
+                                    ? 'border-accent bg-accent-light shadow-card'
                                     : isHovered
-                                        ? 'bg-surface-white border-accent/30 shadow-md'
-                                        : 'bg-surface-white border-border-light hover:border-accent/20'
-                                }
-              `}
+                                        ? 'border-border-focus bg-surface shadow-card'
+                                        : 'border-border bg-surface hover:border-border-focus'
+                            }`}
                         >
-                            <div className="flex items-start gap-3 sm:gap-4">
-                                {/* Level indicator */}
-                                <div
-                                    className={`
-                    flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-syne font-bold text-sm transition-all duration-300
-                    ${isSelected
-                                            ? 'bg-accent text-white shadow-md shadow-accent/30'
-                                            : 'bg-surface-muted text-text-muted'
-                                        }
-                  `}
-                                >
+                            <div className="flex items-start gap-4">
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-syne font-bold text-sm transition-all ${
+                                    isSelected ? 'bg-accent text-navy-800 shadow-gold' : 'bg-surface-alt text-muted'
+                                }`}>
                                     {option.level}
                                 </div>
-
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <p
-                                            className={`font-semibold text-[15px] transition-colors duration-200 ${isSelected ? 'text-accent' : 'text-foreground'
-                                                }`}
-                                        >
+                                        <p className={`font-semibold text-[15px] transition-colors ${isSelected ? 'text-navy-700' : 'text-foreground'}`}>
                                             {option.title}
                                         </p>
-                                        {isSelected && (
-                                            <span className="text-accent animate-scale-in">✓</span>
-                                        )}
+                                        {isSelected && <span className="text-accent animate-scale-in">✓</span>}
                                     </div>
-                                    <p className="text-sm text-text-muted mt-1 leading-relaxed">
-                                        {option.description}
-                                    </p>
+                                    <p className="text-sm text-muted mt-1 leading-relaxed">{option.description}</p>
                                 </div>
                             </div>
                         </button>
@@ -96,9 +74,8 @@ export default function OptionQuestion({
                 })}
             </div>
 
-            {/* Keyboard hint */}
-            <p className="hidden sm:block text-center text-text-light text-xs mt-6">
-                Presiona <kbd className="px-1.5 py-0.5 bg-surface-muted rounded text-text-muted font-mono">1</kbd>–<kbd className="px-1.5 py-0.5 bg-surface-muted rounded text-text-muted font-mono">5</kbd> para seleccionar
+            <p className="hidden sm:block text-center text-light text-xs mt-6">
+                Presiona <kbd className="px-1.5 py-0.5 bg-surface-alt rounded text-muted font-mono text-[11px]">1</kbd>–<kbd className="px-1.5 py-0.5 bg-surface-alt rounded text-muted font-mono text-[11px]">5</kbd> para seleccionar
             </p>
         </div>
     );

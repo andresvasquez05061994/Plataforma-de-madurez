@@ -17,13 +17,13 @@ export default function PriorityRoadmap({ roadmap, priorities }: PriorityRoadmap
     };
 
     return (
-        <div className="bg-surface-white rounded-2xl border border-border-light p-6 animate-slide-up">
+        <div className="bg-surface rounded-2xl border border-border p-6 animate-slide-up">
             <div className="flex items-center gap-2 mb-6">
                 <span className="text-lg">🗺️</span>
                 <h3 className="font-syne font-bold text-lg text-foreground">Ruta de Prioridades</h3>
             </div>
 
-            <p className="text-sm text-text-muted mb-6">
+            <p className="text-sm text-muted mb-6">
                 Servicios ordenados por prioridad de intervención (menor madurez + mayor importancia
                 estratégica).
             </p>
@@ -36,7 +36,7 @@ export default function PriorityRoadmap({ roadmap, priorities }: PriorityRoadmap
                     return (
                         <div
                             key={service.service}
-                            className="flex items-center gap-4 p-4 rounded-xl border border-border-light hover:shadow-md transition-all duration-200"
+                            className="flex items-center gap-4 p-4 rounded-xl border border-border hover:shadow-md transition-all duration-200"
                             style={{ animationDelay: `${idx * 100}ms` }}
                         >
                             {/* Priority number */}
@@ -61,14 +61,14 @@ export default function PriorityRoadmap({ roadmap, priorities }: PriorityRoadmap
                                         {service.score.toFixed(1)} — {service.level}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-text-muted">
+                                <div className="flex items-center gap-2 text-xs text-muted">
                                     <span>Importancia declarada:</span>
                                     <span
                                         className={`font-medium ${priorities[service.service] === 'critica'
                                                 ? 'text-urgency'
                                                 : priorities[service.service] === 'alta'
                                                     ? 'text-orange-500'
-                                                    : 'text-text-muted'
+                                                    : 'text-muted'
                                             }`}
                                     >
                                         {priority}

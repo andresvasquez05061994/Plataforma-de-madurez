@@ -14,17 +14,7 @@ interface ContactFormProps {
     onFinish: () => void;
 }
 
-export default function ContactForm({
-    name,
-    email,
-    role,
-    currentField,
-    onChangeName,
-    onChangeEmail,
-    onChangeRole,
-    onNext,
-    onFinish,
-}: ContactFormProps) {
+export default function ContactForm({ name, email, role, currentField, onChangeName, onChangeEmail, onChangeRole, onNext, onFinish }: ContactFormProps) {
     const [emailError, setEmailError] = useState('');
 
     const validateEmail = (e: string) => {
@@ -33,128 +23,77 @@ export default function ContactForm({
         return valid;
     };
 
-    // Field 0: Name
+    const continueBtn = (enabled: boolean, onClick: () => void, label = 'Continuar →') => (
+        <button
+            onClick={onClick}
+            disabled={!enabled}
+            className={`px-7 py-3 rounded-2xl font-semibold text-sm transition-all duration-200 ${
+                enabled ? 'bg-accent text-navy-800 shadow-gold hover:shadow-gold-lg' : 'bg-surface-alt text-light cursor-not-allowed'
+            }`}
+        >
+            {label}
+        </button>
+    );
+
     if (currentField === 0) {
         return (
             <div className="w-full max-w-2xl mx-auto animate-fade-in">
-                <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
-                        Contacto
-                    </span>
-                </div>
-                <h2 className="font-syne font-bold text-xl sm:text-2xl text-foreground leading-snug mb-6">
-                    ¿Cuál es su nombre?
-                </h2>
+                <span className="inline-block text-xs font-semibold text-accent tracking-wider mb-5 uppercase">Contacto</span>
+                <h2 className="font-syne font-extrabold text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es su nombre?</h2>
                 <input
                     type="text"
                     value={name}
                     onChange={(e) => onChangeName(e.target.value)}
                     placeholder="Tu nombre completo"
-                    className="w-full px-5 py-4 bg-surface-white border-2 border-border-light rounded-xl
-                     text-foreground placeholder:text-text-light text-lg
-                     focus:border-accent focus:ring-0 focus:outline-none transition-all duration-300"
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && name.trim()) onNext();
-                    }}
+                    className="tf-input text-xl"
+                    onKeyDown={(e) => { if (e.key === 'Enter' && name.trim()) onNext(); }}
                     autoFocus
                 />
-                <div className="flex justify-end mt-4">
-                    <button
-                        onClick={onNext}
-                        disabled={!name.trim()}
-                        className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all duration-300
-              ${name.trim()
-                                ? 'bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20'
-                                : 'bg-surface-muted text-text-light cursor-not-allowed'
-                            }`}
-                    >
-                        Continuar →
-                    </button>
-                </div>
+                <div className="flex justify-end mt-6">{continueBtn(!!name.trim(), onNext)}</div>
             </div>
         );
     }
 
-    // Field 1: Email
     if (currentField === 1) {
         return (
             <div className="w-full max-w-2xl mx-auto animate-fade-in">
-                <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
-                        Contacto
-                    </span>
-                </div>
-                <h2 className="font-syne font-bold text-xl sm:text-2xl text-foreground leading-snug mb-6">
-                    ¿Cuál es su correo electrónico?
-                </h2>
+                <span className="inline-block text-xs font-semibold text-accent tracking-wider mb-5 uppercase">Contacto</span>
+                <h2 className="font-syne font-extrabold text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es su correo electrónico?</h2>
                 <input
                     type="email"
                     value={email}
-                    onChange={(e) => {
-                        onChangeEmail(e.target.value);
-                        if (emailError) validateEmail(e.target.value);
-                    }}
+                    onChange={(e) => { onChangeEmail(e.target.value); if (emailError) validateEmail(e.target.value); }}
                     placeholder="tu@empresa.com"
-                    className={`w-full px-5 py-4 bg-surface-white border-2 rounded-xl
-                     text-foreground placeholder:text-text-light text-lg
-                     focus:ring-0 focus:outline-none transition-all duration-300
-                     ${emailError ? 'border-urgency' : 'border-border-light focus:border-accent'}`}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && email.trim() && validateEmail(email)) onNext();
-                    }}
+                    className={`tf-input text-xl ${emailError ? '!border-b-urgency' : ''}`}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && email.trim() && validateEmail(email)) onNext(); }}
                     autoFocus
                 />
                 {emailError && <p className="text-urgency text-sm mt-2">{emailError}</p>}
-                <div className="flex justify-end mt-4">
-                    <button
-                        onClick={() => {
-                            if (validateEmail(email)) onNext();
-                        }}
-                        disabled={!email.trim()}
-                        className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all duration-300
-              ${email.trim()
-                                ? 'bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20'
-                                : 'bg-surface-muted text-text-light cursor-not-allowed'
-                            }`}
-                    >
-                        Continuar →
-                    </button>
-                </div>
+                <div className="flex justify-end mt-6">{continueBtn(!!email.trim(), () => { if (validateEmail(email)) onNext(); })}</div>
             </div>
         );
     }
 
-    // Field 2: Role (optional) + Finish
     return (
         <div className="w-full max-w-2xl mx-auto animate-fade-in">
-            <div className="flex items-center gap-2 mb-4">
-                <span className="text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
-                    Contacto
-                </span>
-                <span className="text-xs text-text-light">(Opcional)</span>
+            <div className="flex items-center gap-2 mb-5">
+                <span className="text-xs font-semibold text-accent tracking-wider uppercase">Contacto</span>
+                <span className="text-xs text-light">(Opcional)</span>
             </div>
-            <h2 className="font-syne font-bold text-xl sm:text-2xl text-foreground leading-snug mb-6">
-                ¿Cuál es su cargo?
-            </h2>
+            <h2 className="font-syne font-extrabold text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es su cargo?</h2>
             <input
                 type="text"
                 value={role}
                 onChange={(e) => onChangeRole(e.target.value)}
                 placeholder="Ej: Director de Ingeniería, Gerente de Proyectos..."
-                className="w-full px-5 py-4 bg-surface-white border-2 border-border-light rounded-xl
-                   text-foreground placeholder:text-text-light text-lg
-                   focus:border-accent focus:ring-0 focus:outline-none transition-all duration-300"
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter') onFinish();
-                }}
+                className="tf-input text-xl"
+                onKeyDown={(e) => { if (e.key === 'Enter') onFinish(); }}
                 autoFocus
             />
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-6">
                 <button
                     onClick={onFinish}
-                    className="px-8 py-3 rounded-xl font-syne font-bold text-base bg-accent text-white
-                     hover:bg-accent-dark shadow-xl shadow-accent/25 hover:shadow-2xl
-                     transition-all duration-300 hover:scale-105 active:scale-100"
+                    className="px-8 py-3.5 rounded-2xl font-syne font-bold text-base bg-accent text-navy-800 shadow-gold hover:shadow-gold-lg hover:scale-[1.02] active:scale-100 transition-all duration-300"
                 >
                     Ver mis resultados →
                 </button>

@@ -51,7 +51,7 @@ export default function VoiceInput({ onTranscript, language = 'es-CO' }: VoiceIn
         relative p-3 rounded-xl transition-all duration-300
         ${isRecording
                     ? 'bg-urgency/10 text-urgency scale-110 shadow-lg shadow-urgency/20'
-                    : 'bg-surface-muted text-text-muted hover:bg-accent/10 hover:text-accent'
+                    : 'bg-surface-alt text-muted hover:bg-accent/10 hover:text-accent'
                 }
       `}
             title={isRecording ? 'Grabando...' : 'Dictar con voz'}

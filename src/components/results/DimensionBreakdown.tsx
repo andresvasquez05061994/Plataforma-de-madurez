@@ -47,7 +47,7 @@ export default function DimensionBreakdown({ dimensions, service, compact = fals
                     return (
                         <div key={key}>
                             <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs text-text-muted flex items-center gap-1">
+                                <span className="text-xs text-muted flex items-center gap-1">
                                     <span>{info.icon}</span>
                                     {info.label}
                                 </span>
@@ -55,7 +55,7 @@ export default function DimensionBreakdown({ dimensions, service, compact = fals
                                     {value > 0 ? value.toFixed(1) : '—'}
                                 </span>
                             </div>
-                            <div className="w-full h-1.5 bg-surface-muted rounded-full overflow-hidden">
+                            <div className="w-full h-1.5 bg-surface-alt rounded-full overflow-hidden">
                                 <div
                                     className="h-full rounded-full transition-all duration-1000 ease-out"
                                     style={{
@@ -66,7 +66,7 @@ export default function DimensionBreakdown({ dimensions, service, compact = fals
                                 />
                             </div>
                             {matrixEntry && (
-                                <p className="text-[11px] text-text-light mt-1 leading-snug">
+                                <p className="text-[11px] text-light mt-1 leading-snug">
                                     {matrixEntry.description}
                                 </p>
                             )}
@@ -94,8 +94,8 @@ export default function DimensionBreakdown({ dimensions, service, compact = fals
                         onClick={() => setExpandedDim(isExpanded ? null : key)}
                         className={`text-left rounded-xl p-4 transition-all duration-300 animate-scale-in border
               ${isExpanded
-                                ? 'bg-surface-white border-accent/20 shadow-lg col-span-1 sm:col-span-2'
-                                : 'bg-surface-muted/50 border-transparent hover:border-border-light hover:shadow-sm'
+                                ? 'bg-surface border-accent/20 shadow-lg col-span-1 sm:col-span-2'
+                                : 'bg-surface-alt/50 border-transparent hover:border-border hover:shadow-sm'
                             }`}
                         style={{ animationDelay: `${idx * 100}ms` }}
                     >
@@ -103,7 +103,7 @@ export default function DimensionBreakdown({ dimensions, service, compact = fals
                             <span className="text-xl flex-shrink-0">{info.icon}</span>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2 mb-1">
-                                    <p className="text-xs text-text-muted uppercase tracking-wide">{info.label}</p>
+                                    <p className="text-xs text-muted uppercase tracking-wide">{info.label}</p>
                                     <span
                                         className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
                                         style={{
@@ -122,11 +122,11 @@ export default function DimensionBreakdown({ dimensions, service, compact = fals
                                 {matrixEntry && (
                                     <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-40 mt-3 opacity-100' : 'max-h-0 opacity-0'
                                         }`}>
-                                        <div className="pt-3 border-t border-border-light">
+                                        <div className="pt-3 border-t border-border">
                                             <p className="text-xs font-medium text-foreground mb-1">
                                                 Nivel {matrixEntry.levelNumber}: {matrixEntry.level}
                                             </p>
-                                            <p className="text-xs text-text-muted leading-relaxed">
+                                            <p className="text-xs text-muted leading-relaxed">
                                                 {matrixEntry.description}
                                             </p>
                                         </div>
@@ -135,7 +135,7 @@ export default function DimensionBreakdown({ dimensions, service, compact = fals
 
                                 {/* Hint to expand */}
                                 {matrixEntry && !isExpanded && (
-                                    <p className="text-[10px] text-text-light mt-2 flex items-center gap-1">
+                                    <p className="text-[10px] text-light mt-2 flex items-center gap-1">
                                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                                             <path d="M3 4l2 2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                                         </svg>

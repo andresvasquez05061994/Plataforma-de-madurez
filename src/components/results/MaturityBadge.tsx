@@ -36,7 +36,7 @@ export default function MaturityBadge({ level, score, size = 'lg' }: MaturityBad
                     <span className="font-syne font-extrabold text-3xl sm:text-4xl" style={{ color }}>
                         {score.toFixed(1)}
                     </span>
-                    <span className="text-xs text-text-muted">/5.0</span>
+                    <span className="text-xs text-muted">/5.0</span>
                 </div>
             </div>
 

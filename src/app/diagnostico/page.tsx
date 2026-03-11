@@ -216,10 +216,10 @@ export default function DiagnosticoPage() {
         return (
             <main className="min-h-screen bg-background flex items-center justify-center">
                 <div className="text-center animate-fade-in">
-                    <div className="w-16 h-16 bg-surface-muted rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+                    <div className="w-16 h-16 bg-surface-alt rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
                         <span className="text-2xl">🔄</span>
                     </div>
-                    <p className="text-text-muted">Redirigiendo...</p>
+                    <p className="text-muted">Redirigiendo...</p>
                 </div>
             </main>
         );
