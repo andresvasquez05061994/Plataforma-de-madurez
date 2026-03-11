@@ -34,6 +34,7 @@ interface AssessmentState {
 
     // ── Dynamic question counts (from Google Sheets) ──
     dynamicQuestionCounts: Partial<Record<ServiceType, number>>;
+    dimensionMaps: Partial<Record<ServiceType, Record<string, string>>>;
 
     // ── Answers ──
     answers: AssessmentAnswers;
@@ -54,8 +55,9 @@ interface AssessmentState {
     toggleService: (service: ServiceType) => void;
     startDiagnostic: () => void;
 
-    // Dynamic question counts
+    // Dynamic question counts & dimension maps
     setDynamicQuestionCounts: (counts: Partial<Record<ServiceType, number>>) => void;
+    setDimensionMap: (service: ServiceType, map: Record<string, string>) => void;
     getQuestionCount: (service: ServiceType) => number;
 
     // Navigation
@@ -117,6 +119,7 @@ export const useAssessmentStore = create<AssessmentState>()((set, get) => ({
     currentQuestion: 0,
     showingSectionBreak: false,
     dynamicQuestionCounts: {},
+    dimensionMaps: {},
     answers: { ...initialAnswers, generalInfo: { ...initialAnswers.generalInfo, selectedServices: [] } },
     scores: [],
     globalScore: 0,
@@ -185,6 +188,11 @@ export const useAssessmentStore = create<AssessmentState>()((set, get) => ({
     setDynamicQuestionCounts: (counts) =>
         set((state) => ({
             dynamicQuestionCounts: { ...state.dynamicQuestionCounts, ...counts },
+        })),
+
+    setDimensionMap: (service, map) =>
+        set((state) => ({
+            dimensionMaps: { ...state.dimensionMaps, [service]: map },
         })),
 
     getQuestionCount: (service) => {
@@ -327,8 +335,8 @@ export const useAssessmentStore = create<AssessmentState>()((set, get) => ({
 
     // ── Results ──
     calculateResults: () => {
-        const { answers } = get();
-        const { scores, globalScore, globalLevel, priorityRoadmap } = calculateAllScores(answers);
+        const { answers, dimensionMaps } = get();
+        const { scores, globalScore, globalLevel, priorityRoadmap } = calculateAllScores(answers, dimensionMaps);
         set({ scores, globalScore, globalLevel, priorityRoadmap });
     },
 
@@ -343,6 +351,7 @@ export const useAssessmentStore = create<AssessmentState>()((set, get) => ({
             currentQuestion: 0,
             showingSectionBreak: false,
             dynamicQuestionCounts: {},
+            dimensionMaps: {},
             answers: { ...initialAnswers, generalInfo: { ...initialAnswers.generalInfo, selectedServices: [] } },
             scores: [],
             globalScore: 0,

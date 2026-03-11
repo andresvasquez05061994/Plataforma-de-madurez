@@ -39,6 +39,7 @@ export default function DiagnosticoPage() {
         dismissSectionBreak,
         calculateResults,
         setDynamicQuestionCounts,
+        setDimensionMap,
     } = store;
 
     const selectedServices = answers.generalInfo.selectedServices;
@@ -60,9 +61,19 @@ export default function DiagnosticoPage() {
                     if (!cancelled && data.questions?.length > 0) {
                         setDynamicQuestions((prev) => ({ ...prev, [svc]: data.questions }));
                         counts[svc] = data.questions.length;
+                        const dimMap: Record<string, string> = {};
+                        for (const q of data.questions as Question[]) {
+                            if (q.id && q.dimension) dimMap[q.id] = q.dimension;
+                        }
+                        setDimensionMap(svc, dimMap);
                     }
                 } catch {
                     counts[svc] = STATIC_QUESTIONS[svc].length;
+                    const dimMap: Record<string, string> = {};
+                    for (const q of STATIC_QUESTIONS[svc]) {
+                        if (q.id && q.dimension) dimMap[q.id] = q.dimension;
+                    }
+                    setDimensionMap(svc, dimMap);
                 }
             }
 

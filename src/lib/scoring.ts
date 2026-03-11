@@ -33,10 +33,34 @@ export function getMaturityColor(level: MaturityLevel): string {
 
 // ─── Score Calculation ─────────────────────────────────────────
 
+type DimensionName = keyof ServiceScore['dimensionScores'];
+
+const ID_DIM_KEYS: Record<string, DimensionName> = {
+    proc: 'procesos',
+    pers: 'personas',
+    herr: 'herramientas',
+    tech: 'tecnologia',
+};
+
+function resolveDimension(
+    questionId: string,
+    dimMap?: Record<string, string>
+): DimensionName | null {
+    if (dimMap?.[questionId]) {
+        const dim = dimMap[questionId] as DimensionName;
+        if (['procesos', 'personas', 'herramientas', 'tecnologia'].includes(dim)) return dim;
+    }
+    for (const [fragment, name] of Object.entries(ID_DIM_KEYS)) {
+        if (questionId.includes(fragment)) return name;
+    }
+    return null;
+}
+
 function calculateServiceScore(
     answers: Record<string, number | string>,
     service: ServiceType,
-    label: string
+    label: string,
+    dimMap?: Record<string, string>
 ): ServiceScore {
     const numericAnswers = Object.entries(answers)
         .filter(([key, val]) => typeof val === 'number' && !key.includes('priority'))
@@ -47,30 +71,30 @@ function calculateServiceScore(
             ? numericAnswers.reduce((sum, v) => sum + v, 0) / numericAnswers.length
             : 0;
 
-    // Calculate per-dimension scores
-    const dimensionKeys = ['proc', 'pers', 'herr', 'tech'];
-    const dimensionNames: Record<string, keyof ServiceScore['dimensionScores']> = {
-        proc: 'procesos',
-        pers: 'personas',
-        herr: 'herramientas',
-        tech: 'tecnologia',
-    };
-
-    const dimensionScores = {
+    const dimensionScores: ServiceScore['dimensionScores'] = {
         procesos: 0,
         personas: 0,
         herramientas: 0,
         tecnologia: 0,
     };
 
-    for (const dimKey of dimensionKeys) {
-        const dimAnswers = Object.entries(answers)
-            .filter(([key, val]) => key.includes(dimKey) && typeof val === 'number')
-            .map(([, val]) => val as number);
+    const buckets: Record<DimensionName, number[]> = {
+        procesos: [],
+        personas: [],
+        herramientas: [],
+        tecnologia: [],
+    };
 
-        if (dimAnswers.length > 0) {
-            dimensionScores[dimensionNames[dimKey]] =
-                dimAnswers.reduce((sum, v) => sum + v, 0) / dimAnswers.length;
+    for (const [key, val] of Object.entries(answers)) {
+        if (typeof val !== 'number' || key.includes('priority')) continue;
+        const dim = resolveDimension(key, dimMap);
+        if (dim) buckets[dim].push(val);
+    }
+
+    for (const dim of Object.keys(buckets) as DimensionName[]) {
+        const arr = buckets[dim];
+        if (arr.length > 0) {
+            dimensionScores[dim] = Math.round((arr.reduce((s, v) => s + v, 0) / arr.length) * 10) / 10;
         }
     }
 
@@ -89,17 +113,19 @@ const serviceLabels: Record<ServiceType, string> = {
     plm: 'PLM',
 };
 
-export function calculateAllScores(answers: AssessmentAnswers): {
+export function calculateAllScores(
+    answers: AssessmentAnswers,
+    dimensionMaps?: Partial<Record<ServiceType, Record<string, string>>>
+): {
     scores: ServiceScore[];
     globalScore: number;
     globalLevel: MaturityLevel;
     priorityRoadmap: ServiceScore[];
 } {
-    // V3: Only calculate scores for selected services
     const selectedServices = answers.generalInfo.selectedServices || ['bim', 'ia', 'plm'];
 
     const scores: ServiceScore[] = selectedServices.map((svc) =>
-        calculateServiceScore(answers[svc], svc, serviceLabels[svc])
+        calculateServiceScore(answers[svc], svc, serviceLabels[svc], dimensionMaps?.[svc])
     );
 
     const validScores = scores.filter((s) => s.score > 0);
