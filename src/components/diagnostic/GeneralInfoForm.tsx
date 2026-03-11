@@ -19,7 +19,7 @@ export default function GeneralInfoForm({ company, industry, employees, currentF
         return (
             <div className="w-full max-w-2xl mx-auto animate-fade-in">
                 <span className="inline-block text-xs font-semibold text-accent tracking-wider mb-5">1 → 3</span>
-                <h2 className="font-syne font-extrabold text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es el nombre de su empresa?</h2>
+                <h2 className="font-syne font-medium text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es el nombre de su empresa?</h2>
                 <div className="relative">
                     <input type="text" value={company} onChange={(e) => onChangeCompany(e.target.value)} placeholder="Ej: Constructora ABC S.A.S." className="tf-input text-xl" onKeyDown={(e) => { if (e.key === 'Enter' && company.trim()) onNext(); }} autoFocus />
                     <div className="absolute right-0 top-1/2 -translate-y-1/2"><VoiceInput onTranscript={(t) => onChangeCompany(t)} /></div>
@@ -36,7 +36,7 @@ export default function GeneralInfoForm({ company, industry, employees, currentF
         return (
             <div className="w-full max-w-2xl mx-auto animate-fade-in">
                 <span className="inline-block text-xs font-semibold text-accent tracking-wider mb-5">2 → 3</span>
-                <h2 className="font-syne font-extrabold text-2xl sm:text-3xl text-foreground leading-snug mb-8">Industria seleccionada</h2>
+                <h2 className="font-syne font-medium text-2xl sm:text-3xl text-foreground leading-snug mb-8">Industria seleccionada</h2>
                 <div className="p-5 bg-accent/8 border-2 border-accent/20 rounded-2xl mb-6">
                     <p className="text-lg font-medium text-foreground">{industryLabels[industry] || industry || 'No seleccionada'}</p>
                     <p className="text-sm text-muted mt-1">Seleccionada en la página anterior. Si necesitas cambiar, regresa al inicio.</p>
@@ -51,7 +51,7 @@ export default function GeneralInfoForm({ company, industry, employees, currentF
     return (
         <div className="w-full max-w-2xl mx-auto animate-fade-in">
             <span className="inline-block text-xs font-semibold text-accent tracking-wider mb-5">3 → 3</span>
-            <h2 className="font-syne font-extrabold text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuántos empleados tiene su organización?</h2>
+            <h2 className="font-syne font-medium text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuántos empleados tiene su organización?</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {employeeRanges.map((range) => (
                     <button key={range} onClick={() => { onChangeEmployees(range); setTimeout(onNext, 300); }} className={`p-4 rounded-2xl border-2 text-center font-medium transition-all duration-200 ${employees === range ? 'bg-accent-light border-accent text-navy-700 shadow-card' : 'bg-surface border-border text-foreground hover:border-border-focus hover:shadow-card'}`}>{range}</button>

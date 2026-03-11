@@ -135,7 +135,7 @@ export default function LandingPage() {
     const renderCompanyStep = () => (
         <div className={wrapper}>
             {stepIndicator(1, 4)}
-            <h2 className="font-syne font-extrabold text-3xl sm:text-4xl text-foreground leading-tight mb-3">
+            <h2 className="font-syne font-medium text-3xl sm:text-4xl text-foreground leading-tight mb-3">
                 ¿Cuál es el nombre de su empresa?
             </h2>
             <p className="text-muted text-base mb-10">
@@ -166,7 +166,7 @@ export default function LandingPage() {
     const renderEmployeesStep = () => (
         <div className={wrapper}>
             {stepIndicator(2, 4)}
-            <h2 className="font-syne font-extrabold text-3xl sm:text-4xl text-foreground leading-tight mb-3">
+            <h2 className="font-syne font-medium text-3xl sm:text-4xl text-foreground leading-tight mb-3">
                 ¿Cuántos empleados tiene?
             </h2>
             <p className="text-muted text-base mb-10">
@@ -198,7 +198,7 @@ export default function LandingPage() {
     const renderIndustryStep = () => (
         <div className={wrapper}>
             {stepIndicator(3, 4)}
-            <h2 className="font-syne font-extrabold text-3xl sm:text-4xl text-foreground leading-tight mb-3">
+            <h2 className="font-syne font-medium text-3xl sm:text-4xl text-foreground leading-tight mb-3">
                 ¿En qué industria opera?
             </h2>
             <p className="text-muted text-base mb-10">
@@ -234,7 +234,7 @@ export default function LandingPage() {
             <div className="flex flex-col lg:flex-row gap-10 max-w-5xl mx-auto">
                 <div className="flex-1 max-w-xl">
                     {stepIndicator(4, 4)}
-                    <h2 className="font-syne font-extrabold text-3xl sm:text-4xl text-foreground leading-tight mb-3">
+                    <h2 className="font-syne font-medium text-3xl sm:text-4xl text-foreground leading-tight mb-3">
                         ¿Qué evaluaciones aplican?
                     </h2>
                     <p className="text-muted text-base mb-10">

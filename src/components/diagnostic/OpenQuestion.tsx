@@ -29,7 +29,7 @@ export default function OpenQuestion({ text, help, value, onChange, onNext, plac
             </span>
 
             <div className="flex items-start gap-3 mb-8">
-                <h2 className="font-syne font-extrabold text-xl sm:text-2xl text-foreground leading-snug flex-1">{text}</h2>
+                <h2 className="font-syne font-medium text-xl sm:text-2xl text-foreground leading-snug flex-1">{text}</h2>
                 {help && <HelpTooltip text={help} />}
             </div>
 

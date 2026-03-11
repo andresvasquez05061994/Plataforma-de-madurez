@@ -25,7 +25,7 @@ export default function PriorityQuestion({ text, help, currentValue, onAnswer }:
                 <div className="flex-1">
                     <p className="text-xs font-semibold text-accent mb-2 tracking-wider uppercase">Pregunta de prioridad estratégica</p>
                     <div className="flex items-start gap-3">
-                        <h2 className="font-syne font-extrabold text-xl sm:text-2xl text-foreground leading-snug flex-1">{text}</h2>
+                        <h2 className="font-syne font-medium text-xl sm:text-2xl text-foreground leading-snug flex-1">{text}</h2>
                         {help && <HelpTooltip text={help} />}
                     </div>
                 </div>

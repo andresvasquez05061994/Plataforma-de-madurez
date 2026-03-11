@@ -39,7 +39,7 @@ export default function ContactForm({ name, email, role, currentField, onChangeN
         return (
             <div className="w-full max-w-2xl mx-auto animate-fade-in">
                 <span className="inline-block text-xs font-semibold text-accent tracking-wider mb-5 uppercase">Contacto</span>
-                <h2 className="font-syne font-extrabold text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es su nombre?</h2>
+                <h2 className="font-syne font-medium text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es su nombre?</h2>
                 <input
                     type="text"
                     value={name}
@@ -58,7 +58,7 @@ export default function ContactForm({ name, email, role, currentField, onChangeN
         return (
             <div className="w-full max-w-2xl mx-auto animate-fade-in">
                 <span className="inline-block text-xs font-semibold text-accent tracking-wider mb-5 uppercase">Contacto</span>
-                <h2 className="font-syne font-extrabold text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es su correo electrónico?</h2>
+                <h2 className="font-syne font-medium text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es su correo electrónico?</h2>
                 <input
                     type="email"
                     value={email}
@@ -80,7 +80,7 @@ export default function ContactForm({ name, email, role, currentField, onChangeN
                 <span className="text-xs font-semibold text-accent tracking-wider uppercase">Contacto</span>
                 <span className="text-xs text-light">(Opcional)</span>
             </div>
-            <h2 className="font-syne font-extrabold text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es su cargo?</h2>
+            <h2 className="font-syne font-medium text-2xl sm:text-3xl text-foreground leading-snug mb-8">¿Cuál es su cargo?</h2>
             <input
                 type="text"
                 value={role}
