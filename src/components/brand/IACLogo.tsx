@@ -10,10 +10,10 @@ interface IACLogoProps {
 }
 
 const dimensions = {
-    sm: { h: 48, w: 80 },
-    md: { h: 72, w: 120 },
-    lg: { h: 96, w: 160 },
-    xl: { h: 140, w: 240 },
+    sm: { h: 60, w: 100 },
+    md: { h: 90, w: 150 },
+    lg: { h: 130, w: 220 },
+    xl: { h: 180, w: 300 },
 };
 
 export default function IACLogo({ size = 'md', showTagline = false, className = '' }: IACLogoProps) {
