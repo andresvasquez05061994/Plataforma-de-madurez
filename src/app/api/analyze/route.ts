@@ -6,58 +6,60 @@ export async function POST(request: NextRequest) {
         const { answers, scores, globalScore } = body;
 
         const apiKey = process.env.OPENAI_API_KEY;
+        let analysis = '';
 
         if (!apiKey) {
-            const fallbackAnalysis = generateFallbackAnalysis(answers, scores, globalScore);
-            return NextResponse.json({ analysis: fallbackAnalysis });
-        }
+            analysis = generateFallbackAnalysis(answers, scores, globalScore);
+        } else {
+            const assessmentContext = buildAssessmentContext(answers, scores, globalScore);
 
-        const assessmentContext = buildAssessmentContext(answers, scores, globalScore);
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-                model: 'gpt-4o-mini',
-                max_tokens: 2000,
-                messages: [
-                    {
-                        role: 'system',
-                        content: `Eres consultor senior en transformación digital industrial.
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        max_tokens: 2000,
+                        messages: [
+                            {
+                                role: 'system',
+                                content: `Eres consultor senior en transformación digital industrial.
 Analiza el diagnóstico de madurez y genera en español:
 1. Resumen ejecutivo (2 párrafos, tono ejecutivo orientado a ROI)
 2. Top 3 brechas críticas identificadas
 3. Roadmap de 90 días con 3 fases concretas
 4. Próximo paso recomendado (accionable esta semana)
 Tono: directo, concreto, con métricas cuando sea posible.`,
-                    },
-                    {
-                        role: 'user',
-                        content: assessmentContext,
-                    },
-                ],
-            }),
-        });
+                            },
+                            {
+                                role: 'user',
+                                content: assessmentContext,
+                            },
+                        ],
+                    }),
+                });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('OpenAI API error:', response.status, errorText);
-            const fallbackAnalysis = generateFallbackAnalysis(answers, scores, globalScore);
-            return NextResponse.json({ analysis: fallbackAnalysis });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('OpenAI API error:', response.status, errorText);
+                    analysis = generateFallbackAnalysis(answers, scores, globalScore);
+                } else {
+                    const data = await response.json();
+                    analysis = data.choices?.[0]?.message?.content || generateFallbackAnalysis(answers, scores, globalScore);
+                }
+            } catch (aiErr) {
+                console.error('OpenAI fetch error:', aiErr);
+                analysis = generateFallbackAnalysis(answers, scores, globalScore);
+            }
         }
 
-        const data = await response.json();
-        const analysis = data.choices?.[0]?.message?.content || '';
-
-        // Save to Supabase if configured
         try {
             await saveToSupabase(answers, scores, globalScore, analysis);
         } catch (dbError) {
-            console.error('Supabase save error:', dbError);
-            // Don't fail the request if DB save fails
+            console.error('Supabase save error (details):', dbError);
         }
 
         return NextResponse.json({ analysis });
@@ -163,7 +165,10 @@ async function saveToSupabase(
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseKey) return;
+    if (!supabaseUrl || !supabaseKey) {
+        console.warn('Supabase not configured — skipping save. URL:', !!supabaseUrl, 'KEY:', !!supabaseKey);
+        return;
+    }
 
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -176,7 +181,7 @@ async function saveToSupabase(
         return 'Optimizado';
     };
 
-    await supabase.from('assessments').insert({
+    const { error } = await supabase.from('assessments').insert({
         company: answers.generalInfo?.company || '',
         industry: answers.generalInfo?.industry || '',
         selected_services: answers.generalInfo?.selectedServices || [],
@@ -190,4 +195,10 @@ async function saveToSupabase(
         contact_role: answers.contact?.role || '',
         objective: answers.objective || '',
     });
+
+    if (error) {
+        console.error('Supabase INSERT error:', error.message, error.details, error.hint);
+        throw new Error(`Supabase: ${error.message}`);
+    }
+    console.log('Assessment saved to Supabase successfully');
 }

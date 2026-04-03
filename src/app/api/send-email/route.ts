@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { buildReportData } from '@/lib/generateReport';
-import fs from 'fs';
-import path from 'path';
+import { getReportTemplate, injectReportData } from '@/lib/report-utils';
 
 export async function POST(request: NextRequest) {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
         return NextResponse.json(
-            { error: 'Resend no está configurado' },
+            { error: 'Resend no está configurado. Agrega RESEND_API_KEY en las variables de entorno.' },
             { status: 503 }
         );
     }
@@ -23,15 +22,15 @@ export async function POST(request: NextRequest) {
         const resend = new Resend(apiKey);
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
-        // Build the report HTML for attachment
-        const DATA = buildReportData(answers);
-        const templatePath = path.join(process.cwd(), 'src/lib/report-template.html');
-        let reportHtml = fs.readFileSync(templatePath, 'utf-8');
-        const dataBlock = `const DATA = ${JSON.stringify(DATA, null, 2)};`;
-        reportHtml = reportHtml.replace(
-            /\/\* ─────────────────────────────[\s\S]*?───────────────────────────────\*\/\s*\nconst DATA = \{[\s\S]*?\n\};/,
-            dataBlock
-        );
+        let reportHtml: string;
+        try {
+            const DATA = buildReportData(answers);
+            const template = getReportTemplate();
+            reportHtml = injectReportData(template, DATA);
+        } catch (tplErr) {
+            console.error('Template generation error:', tplErr);
+            reportHtml = `<html><body><h1>Diagnóstico de Madurez Digital — ${company || 'Empresa'}</h1><p>El reporte completo no pudo generarse. Descárgalo desde la plataforma.</p></body></html>`;
+        }
 
         const servicesText = (services as string[])?.join(', ') || 'Madurez Digital';
         const contactName = name || 'Estimado/a';
@@ -72,7 +71,7 @@ export async function POST(request: NextRequest) {
     <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 24px 0;" />
 
     <p style="font-size: 12px; color: #94A3B8; text-align: center; line-height: 1.5;">
-      📎 Adjuntamos tu reporte completo de diagnóstico en el archivo HTML.<br/>
+      Adjuntamos tu reporte completo de diagnóstico en el archivo HTML.<br/>
       Ábrelo en tu navegador para ver los resultados detallados e imprimir a PDF.
     </p>
   </div>
@@ -87,7 +86,7 @@ export async function POST(request: NextRequest) {
 </body>
 </html>`;
 
-        const { error } = await resend.emails.send({
+        const { data, error } = await resend.emails.send({
             from: `IAC Diagnóstico <${fromEmail}>`,
             to: [email],
             subject: `Resultados de Evaluación de Madurez Digital — ${company || 'Tu Empresa'}`,
@@ -95,22 +94,25 @@ export async function POST(request: NextRequest) {
             attachments: [
                 {
                     filename: `Diagnostico-${(company || 'Empresa').replace(/\s+/g, '-')}.html`,
-                    content: Buffer.from(reportHtml, 'utf-8').toString('base64'),
-                    contentType: 'text/html',
+                    content: Buffer.from(reportHtml, 'utf-8'),
                 },
             ],
         });
 
         if (error) {
-            console.error('Resend error:', error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error('Resend API error:', JSON.stringify(error));
+            return NextResponse.json(
+                { error: error.message || 'Error del servicio de correo' },
+                { status: 500 }
+            );
         }
 
-        return NextResponse.json({ success: true });
-    } catch (err) {
-        console.error('Send email error:', err);
+        console.log('Email sent successfully. ID:', data?.id);
+        return NextResponse.json({ success: true, id: data?.id });
+    } catch (err: any) {
+        console.error('Send email error:', err?.message || err);
         return NextResponse.json(
-            { error: 'Error al enviar el correo' },
+            { error: err?.message || 'Error al enviar el correo' },
             { status: 500 }
         );
     }
