@@ -11,7 +11,7 @@ export const serviceSections: ServiceSection[] = [
     {
         key: 'ia',
         title: 'IA / RPA',
-        description: 'Inteligencia Artificial y Automatización — Mide tu nivel de adopción de inteligencia artificial y automatización robótica de procesos.',
+        description: 'Inteligencia Artificial y Automatización — Mide tu nivel de adopción de inteligencia artificial y automatización de procesos.',
         icon: '🤖',
         questionCount: 9,
     },

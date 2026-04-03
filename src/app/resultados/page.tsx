@@ -19,6 +19,7 @@ export default function ResultadosPage() {
     const [isAnalysisLoading, setIsAnalysisLoading] = useState(true);
     const [isPdfGenerating, setIsPdfGenerating] = useState(false);
     const [calcError, setCalcError] = useState('');
+    const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
     const selectedServices = answers.generalInfo.selectedServices;
     const serviceCount = scores.length;
@@ -76,6 +77,29 @@ export default function ResultadosPage() {
         } catch { alert('Error al generar el reporte. Intenta de nuevo.'); }
         finally { setIsPdfGenerating(false); }
     };
+
+    const handleSendEmail = async () => {
+        const email = answers.contact?.email;
+        if (!email) { alert('No se encontró un correo electrónico. Completa el formulario de contacto.'); return; }
+        setEmailStatus('sending');
+        try {
+            const res = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: answers.contact?.name || '',
+                    email,
+                    company: answers.generalInfo.company,
+                    services: scores.map(s => s.label),
+                    answers,
+                }),
+            });
+            if (res.ok) { setEmailStatus('sent'); }
+            else { setEmailStatus('error'); }
+        } catch { setEmailStatus('error'); }
+    };
+
+    const emailBtnLabel = emailStatus === 'sending' ? 'Enviando...' : emailStatus === 'sent' ? '✓ Enviado' : emailStatus === 'error' ? 'Error — Reintentar' : '✉️ Enviar a mi correo';
 
     if (scores.length === 0) {
         return (
@@ -184,7 +208,10 @@ export default function ResultadosPage() {
                         <IACLogo size="sm" />
                         <p className="text-xs text-muted">Resultados del diagnóstico</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <button onClick={handleSendEmail} disabled={emailStatus === 'sending'} className={`px-4 py-2 rounded-2xl text-sm font-medium transition-all disabled:opacity-50 ${emailStatus === 'sent' ? 'bg-success text-white' : emailStatus === 'error' ? 'bg-urgency text-white' : 'bg-surface border border-border text-foreground hover:bg-surface-alt'}`}>
+                            {emailBtnLabel}
+                        </button>
                         <button onClick={handleDownloadPDF} disabled={isPdfGenerating} className="px-4 py-2 rounded-2xl text-sm font-medium bg-foreground text-white hover:opacity-90 transition-all disabled:opacity-50">
                             {isPdfGenerating ? (
                                 <span className="flex items-center gap-2">
@@ -193,7 +220,7 @@ export default function ResultadosPage() {
                                 </span>
                             ) : '📄 Descargar PDF'}
                         </button>
-                        <a href="mailto:info@iac.com.co?subject=Consultoría Diagnóstico de Madurez Digital" className="px-4 py-2 rounded-2xl text-sm font-medium bg-accent text-navy-800 hover:bg-accent-hover transition-all shadow-gold">
+                        <a href="mailto:info@iac.com.co?subject=Consultoría Diagnóstico de Madurez Digital" className="hidden sm:inline-flex px-4 py-2 rounded-2xl text-sm font-medium bg-accent text-navy-800 hover:bg-accent-hover transition-all shadow-gold">
                             📅 Agendar consultoría
                         </a>
                     </div>
@@ -231,6 +258,9 @@ export default function ResultadosPage() {
                         <a href="mailto:info@iac.com.co?subject=Consultoría Diagnóstico de Madurez Digital" className="px-6 py-3 bg-accent text-navy-800 font-syne font-bold rounded-2xl hover:bg-accent-hover transition-all shadow-gold">
                             Agendar consultoría gratuita
                         </a>
+                        <button onClick={handleSendEmail} disabled={emailStatus === 'sending'} className={`px-6 py-3 font-medium rounded-2xl transition-all border ${emailStatus === 'sent' ? 'bg-success text-white border-success' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}>
+                            {emailBtnLabel}
+                        </button>
                         <button onClick={handleDownloadPDF} className="px-6 py-3 bg-white/10 text-white font-medium rounded-2xl hover:bg-white/20 transition-all border border-white/20">
                             📄 Descargar reporte completo
                         </button>
