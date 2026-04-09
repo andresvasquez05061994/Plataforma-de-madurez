@@ -59,7 +59,7 @@ Tono: directo, concreto, con métricas cuando sea posible.`,
         try {
             await saveToSupabase(answers, scores, globalScore, analysis);
         } catch (dbError) {
-            console.error('Supabase save error (details):', dbError);
+            console.error('Supabase save error:', dbError);
         }
 
         return NextResponse.json({ analysis });

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const { name, email, company, services, answers } = await request.json();
+        const { name, email, company, services, answers, scores } = await request.json();
 
         if (!email) {
             return NextResponse.json({ error: 'Email es requerido' }, { status: 400 });
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
         let reportHtml: string;
         try {
-            const DATA = buildReportData(answers);
+            const DATA = buildReportData(answers, scores);
             const template = getReportTemplate();
             reportHtml = injectReportData(template, DATA);
         } catch (tplErr) {
@@ -107,7 +107,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log('Email sent successfully. ID:', data?.id);
         return NextResponse.json({ success: true, id: data?.id });
     } catch (err: any) {
         console.error('Send email error:', err?.message || err);

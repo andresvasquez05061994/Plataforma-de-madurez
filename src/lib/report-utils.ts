@@ -24,18 +24,24 @@ export function getReportTemplate(): string {
     throw new Error('report-template.html not found in any expected location');
 }
 
+const DATA_BLOCK_REGEX = /\/\*[\s\S]*?SURVEY RESULTS[\s\S]*?\*\/[\s\S]*?const DATA\s*=\s*\{[\s\S]*?\n\};/;
+
 export function injectReportData(template: string, data: ReportData): string {
     const dataBlock = `const DATA = ${JSON.stringify(data, null, 2)};`;
+    const normalized = template.replace(/\r\n/g, '\n');
 
-    // Handles both \n and \r\n line endings
-    const replaced = template.replace(
-        /\/\*\s*─+[\s\S]*?─+\s*\*\/\s*[\r\n]+const DATA\s*=\s*\{[\s\S]*?\r?\n\};/,
-        dataBlock
-    );
+    const replaced = normalized.replace(DATA_BLOCK_REGEX, dataBlock);
 
-    if (replaced === template) {
-        console.warn('report-utils: regex did not match — injecting DATA before </script>');
-        return template.replace('</script>', `${dataBlock}\n</script>`);
+    if (replaced === normalized) {
+        console.warn('report-utils: primary regex did not match, trying generic approach');
+        const generic = normalized.replace(
+            /const DATA\s*=\s*\{[\s\S]*?\n\};/,
+            dataBlock
+        );
+        if (generic !== normalized) return generic;
+
+        console.error('report-utils: no DATA block found in template');
+        throw new Error('Could not inject DATA into report template');
     }
 
     return replaced;

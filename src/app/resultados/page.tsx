@@ -67,15 +67,26 @@ export default function ResultadosPage() {
 
     const handleDownloadPDF = async () => {
         setIsPdfGenerating(true);
+        const win = window.open('', '_blank');
         try {
-            const res = await fetch('/api/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) });
+            const res = await fetch('/api/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers, scores }) });
             if (!res.ok) throw new Error('Report API error');
             const html = await res.text();
-            const win = window.open('', '_blank');
-            if (win) { win.document.write(html); win.document.close(); }
-            else alert('Permite ventanas emergentes para descargar el reporte.');
-        } catch { alert('Error al generar el reporte. Intenta de nuevo.'); }
-        finally { setIsPdfGenerating(false); }
+            if (win) {
+                win.document.write(html);
+                win.document.close();
+            } else {
+                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `Diagnostico-${answers.generalInfo.company || 'Empresa'}.html`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            }
+        } catch {
+            if (win) win.close();
+            alert('Error al generar el reporte. Intenta de nuevo.');
+        } finally { setIsPdfGenerating(false); }
     };
 
     const handleSendEmail = async () => {
@@ -92,10 +103,16 @@ export default function ResultadosPage() {
                     company: answers.generalInfo.company,
                     services: scores.map(s => s.label),
                     answers,
+                    scores,
                 }),
             });
-            if (res.ok) { setEmailStatus('sent'); }
-            else { setEmailStatus('error'); }
+            if (res.ok) {
+                setEmailStatus('sent');
+            } else {
+                const data = await res.json().catch(() => ({}));
+                console.error('Email API error:', data);
+                setEmailStatus('error');
+            }
         } catch { setEmailStatus('error'); }
     };
 

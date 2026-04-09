@@ -4,9 +4,9 @@ import { getReportTemplate, injectReportData } from '@/lib/report-utils';
 
 export async function POST(request: NextRequest) {
     try {
-        const { answers } = await request.json();
+        const { answers, scores } = await request.json();
 
-        const DATA = buildReportData(answers);
+        const DATA = buildReportData(answers, scores);
         const template = getReportTemplate();
         const html = injectReportData(template, DATA);
 

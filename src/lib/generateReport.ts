@@ -1,4 +1,4 @@
-import { AssessmentAnswers, ServiceType } from '@/types/assessment';
+import { AssessmentAnswers, ServiceScore, ServiceType } from '@/types/assessment';
 
 // ── Breach texts per dimension per service (score < 3 = critical) ──
 
@@ -121,45 +121,65 @@ export interface ReportData {
     }>;
 }
 
-export function buildReportData(answers: AssessmentAnswers): ReportData {
+const DIM_KEY_TO_LABEL: Record<string, string> = {
+    procesos: 'D1 · Procesos',
+    personas: 'D2 · Personas',
+    herramientas: 'D3 · Herramientas',
+    tecnologia: 'D4 · Tecnología',
+};
+
+export function buildReportData(
+    answers: AssessmentAnswers,
+    precomputedScores?: ServiceScore[],
+): ReportData {
     const { company, industry, employees, selectedServices } = answers.generalInfo;
 
     const services: ReportData['services'] = {};
 
     for (const svc of selectedServices) {
-        const dimMap = DIM_MAP[svc];
-        if (!dimMap) continue;
+        const precomputed = precomputedScores?.find((s) => s.service === svc);
 
         const dims: Record<string, { score: number; breach: string; next: string }> = {};
-        let totalScore = 0;
-        let totalDims = 0;
+        let serviceScore: number;
 
-        for (const [dimName, questionIds] of Object.entries(dimMap)) {
-            const values = questionIds
-                .map((id) => answers[svc]?.[id])
-                .filter((v): v is number => typeof v === 'number');
+        if (precomputed) {
+            serviceScore = precomputed.score;
+            for (const [dimKey, dimLabel] of Object.entries(DIM_KEY_TO_LABEL)) {
+                const dimScore = precomputed.dimensionScores[dimKey as keyof typeof precomputed.dimensionScores] || 0;
+                const breachData = dimScore < 3
+                    ? BREACH_TEXT[svc]?.[dimLabel] || BREACH_OK
+                    : BREACH_OK;
+                dims[dimLabel] = { score: dimScore || 1, breach: breachData.breach, next: breachData.next };
+            }
+        } else {
+            const dimMap = DIM_MAP[svc];
+            if (!dimMap) continue;
 
-            const dimScore = values.length > 0
-                ? Math.round((values.reduce((s, v) => s + v, 0) / values.length) * 10) / 10
-                : 1;
+            let totalScore = 0;
+            let totalDims = 0;
 
-            const breachData = dimScore < 3
-                ? BREACH_TEXT[svc]?.[dimName] || BREACH_OK
-                : BREACH_OK;
+            for (const [dimName, questionIds] of Object.entries(dimMap)) {
+                const values = questionIds
+                    .map((id) => answers[svc]?.[id])
+                    .filter((v): v is number => typeof v === 'number');
 
-            dims[dimName] = {
-                score: dimScore,
-                breach: breachData.breach,
-                next: breachData.next,
-            };
+                const dimScore = values.length > 0
+                    ? Math.round((values.reduce((s, v) => s + v, 0) / values.length) * 10) / 10
+                    : 1;
 
-            totalScore += dimScore;
-            totalDims++;
+                const breachData = dimScore < 3
+                    ? BREACH_TEXT[svc]?.[dimName] || BREACH_OK
+                    : BREACH_OK;
+
+                dims[dimName] = { score: dimScore, breach: breachData.breach, next: breachData.next };
+                totalScore += dimScore;
+                totalDims++;
+            }
+
+            serviceScore = totalDims > 0
+                ? Math.round((totalScore / totalDims) * 10) / 10
+                : 0;
         }
-
-        const serviceScore = totalDims > 0
-            ? Math.round((totalScore / totalDims) * 10) / 10
-            : 0;
 
         services[svc] = {
             score: serviceScore,
