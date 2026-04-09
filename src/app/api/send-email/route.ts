@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { buildReportData } from '@/lib/generateReport';
 import { getReportTemplate, injectReportData } from '@/lib/report-utils';
+import { htmlToPdf } from '@/lib/html-to-pdf';
+
+export const maxDuration = 30;
 
 export async function POST(request: NextRequest) {
     const apiKey = process.env.RESEND_API_KEY;
@@ -31,6 +34,17 @@ export async function POST(request: NextRequest) {
             console.error('Template generation error:', tplErr);
             reportHtml = `<html><body><h1>Diagnóstico de Madurez Digital — ${company || 'Empresa'}</h1><p>El reporte completo no pudo generarse. Descárgalo desde la plataforma.</p></body></html>`;
         }
+
+        let pdfBuffer: Buffer;
+        try {
+            pdfBuffer = await htmlToPdf(reportHtml);
+        } catch (pdfErr) {
+            console.error('PDF generation error, falling back to HTML attachment:', pdfErr);
+            pdfBuffer = Buffer.from(reportHtml, 'utf-8');
+        }
+
+        const isPdf = pdfBuffer[0] === 0x25 && pdfBuffer[1] === 0x50;
+        const filename = `Diagnostico-${(company || 'Empresa').replace(/\s+/g, '-')}${isPdf ? '.pdf' : '.html'}`;
 
         const servicesText = (services as string[])?.join(', ') || 'Madurez Digital';
         const contactName = name || 'Estimado/a';
@@ -62,7 +76,7 @@ export async function POST(request: NextRequest) {
     </p>
 
     <div style="text-align: center; margin: 24px 0;">
-      <a href="mailto:info@iac.com.co?subject=Consultoría Diagnóstico de Madurez Digital - ${company || ''}"
+      <a href="https://outlook.office.com/book/ConversemosdeIA@iac.com.co/?ismsaljsauthenabled"
          style="display: inline-block; background: #FDB813; color: #1B2A4A; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 15px;">
         Agendar consultoría gratuita
       </a>
@@ -71,8 +85,7 @@ export async function POST(request: NextRequest) {
     <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 24px 0;" />
 
     <p style="font-size: 12px; color: #94A3B8; text-align: center; line-height: 1.5;">
-      Adjuntamos tu reporte completo de diagnóstico en el archivo HTML.<br/>
-      Ábrelo en tu navegador para ver los resultados detallados e imprimir a PDF.
+      Adjuntamos tu reporte completo de diagnóstico en formato PDF.
     </p>
   </div>
 
@@ -93,8 +106,8 @@ export async function POST(request: NextRequest) {
             html: emailHtml,
             attachments: [
                 {
-                    filename: `Diagnostico-${(company || 'Empresa').replace(/\s+/g, '-')}.html`,
-                    content: Buffer.from(reportHtml, 'utf-8'),
+                    filename,
+                    content: pdfBuffer,
                 },
             ],
         });

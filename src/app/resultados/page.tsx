@@ -238,7 +238,7 @@ export default function ResultadosPage() {
                                 </span>
                             ) : '📄 Descargar PDF'}
                         </button>
-                        <a href="mailto:info@iac.com.co?subject=Consultoría Diagnóstico de Madurez Digital" className="hidden sm:inline-flex px-4 py-2 rounded-2xl text-sm font-medium bg-accent text-navy-800 hover:bg-accent-hover transition-all shadow-gold">
+                        <a href="https://outlook.office.com/book/ConversemosdeIA@iac.com.co/?ismsaljsauthenabled" target="_blank" rel="noopener noreferrer" className="hidden sm:inline-flex px-4 py-2 rounded-2xl text-sm font-medium bg-accent text-navy-800 hover:bg-accent-hover transition-all shadow-gold">
                             📅 Agendar consultoría
                         </a>
                     </div>
@@ -273,7 +273,7 @@ export default function ResultadosPage() {
                         Nuestro equipo de consultores puede ayudarte a implementar un roadmap personalizado basado en estos resultados.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        <a href="mailto:info@iac.com.co?subject=Consultoría Diagnóstico de Madurez Digital" className="px-6 py-3 bg-accent text-navy-800 font-syne font-bold rounded-2xl hover:bg-accent-hover transition-all shadow-gold">
+                        <a href="https://outlook.office.com/book/ConversemosdeIA@iac.com.co/?ismsaljsauthenabled" target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-accent text-navy-800 font-syne font-bold rounded-2xl hover:bg-accent-hover transition-all shadow-gold">
                             Agendar consultoría gratuita
                         </a>
                         <button onClick={handleSendEmail} disabled={emailStatus === 'sending'} className={`px-6 py-3 font-medium rounded-2xl transition-all border ${emailStatus === 'sent' ? 'bg-success text-white border-success' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}>
