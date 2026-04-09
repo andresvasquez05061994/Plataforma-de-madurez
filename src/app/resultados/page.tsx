@@ -67,24 +67,25 @@ export default function ResultadosPage() {
 
     const handleDownloadPDF = async () => {
         setIsPdfGenerating(true);
-        const win = window.open('', '_blank');
         try {
             const res = await fetch('/api/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers, scores }) });
-            if (!res.ok) throw new Error('Report API error');
-            const html = await res.text();
-            if (win) {
-                win.document.write(html);
-                win.document.close();
-            } else {
-                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `Diagnostico-${answers.generalInfo.company || 'Empresa'}.html`;
-                a.click();
-                URL.revokeObjectURL(a.href);
+            if (!res.ok) {
+                const err = await res.text().catch(() => '');
+                throw new Error(err || `Error ${res.status}`);
             }
-        } catch {
-            if (win) win.close();
+            const html = await res.text();
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const win = window.open(url, '_blank');
+            if (!win) {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Diagnostico-${(answers.generalInfo.company || 'Empresa').replace(/\s+/g, '-')}.html`;
+                a.click();
+            }
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+        } catch (e) {
+            console.error('Report error:', e);
             alert('Error al generar el reporte. Intenta de nuevo.');
         } finally { setIsPdfGenerating(false); }
     };
