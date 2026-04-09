@@ -9,7 +9,7 @@ export async function htmlToPdf(html: string): Promise<Buffer> {
                 args: chromium.default.args,
                 defaultViewport: { width: 1123, height: 794 },
                 executablePath: await chromium.default.executablePath(),
-                headless: chromium.default.headless,
+                headless: true,
             });
         } else {
             const fs = await import('fs');
