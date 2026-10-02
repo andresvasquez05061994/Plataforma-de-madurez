@@ -16,13 +16,15 @@ export type AdminDataAccess =
     | { ok: false; status: 401 | 403 | 503; error: string };
 
 export const API_ROUTE_ACCESS = {
-    'assessment/route.ts': 'admin',
-    'analyze/route.ts': 'public',
-    'report/route.ts': 'public',
-    'send-email/route.ts': 'public',
-    'questions/[service]/route.ts': 'public',
-    'auth/login/route.ts': 'public',
-    'auth/logout/route.ts': 'public',
+    'api/assessment/route.ts': 'admin',
+    'api/analyze/route.ts': 'public',
+    'api/report/route.ts': 'public',
+    'api/send-email/route.ts': 'public',
+    'api/questions/[service]/route.ts': 'public',
+    'api/auth/login/route.ts': 'public',
+    'api/auth/logout/route.ts': 'public',
+    'api/auth/google/route.ts': 'public',
+    'auth/callback/route.ts': 'public',
 } as const;
 
 export type ApiRouteFile = keyof typeof API_ROUTE_ACCESS;
@@ -151,5 +153,49 @@ export function adminDataAccess(
 
 export function apiFileToPath(relativeFile: string): string {
     const withoutRoute = relativeFile.replace(/\/route\.ts$/, '').replace(/route\.ts$/, '');
-    return `/api/${withoutRoute.replace('[service]', 'bim')}`;
+    return `/${withoutRoute.replace('[service]', 'bim')}`;
+}
+
+/** Where to send the browser after the Google PKCE exchange. */
+export function googleCallbackDestination(
+    email: string | null | undefined,
+    allowlistRaw: string | undefined | null
+): '/admin' | '/admin/login?error=forbidden' {
+    if (!isAllowedAdmin(email, allowlistRaw)) return '/admin/login?error=forbidden';
+    return '/admin';
+}
+
+/**
+ * Public origin for OAuth redirectTo and the callback's return hop.
+ * In production, trust a single forwarded host. In development, use the
+ * request URL so localhost is not replaced by a proxy header.
+ */
+export function publicOriginFrom(input: {
+    requestUrl: string;
+    forwardedHost?: string | null;
+    nodeEnv?: string;
+}): string {
+    const url = new URL(input.requestUrl);
+    if (input.nodeEnv !== 'production') return url.origin;
+    const host = input.forwardedHost?.split(',')[0]?.trim() ?? '';
+    if (!/^[a-zA-Z0-9.-]+(?::\d+)?$/.test(host)) return url.origin;
+    if (host === 'localhost' || host.startsWith('localhost:') || host.startsWith('127.0.0.1')) {
+        return url.origin;
+    }
+    return `https://${host}`;
+}
+
+/** signInWithOAuth must only send the browser to this project's authorize endpoint. */
+export function isSupabaseAuthorizeUrl(candidate: string, supabaseUrl: string): boolean {
+    try {
+        const target = new URL(candidate);
+        const base = new URL(supabaseUrl);
+        return (
+            target.protocol === 'https:' &&
+            target.host === base.host &&
+            target.pathname === '/auth/v1/authorize'
+        );
+    } catch {
+        return false;
+    }
 }

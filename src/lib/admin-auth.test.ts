@@ -9,8 +9,11 @@ import {
     apiFileToPath,
     decideAccess,
     emailFromClaims,
+    googleCallbackDestination,
     isAllowedAdmin,
+    isSupabaseAuthorizeUrl,
     parseAdminAllowlist,
+    publicOriginFrom,
     resolveServiceRoleKey,
 } from './admin-auth.ts';
 
@@ -88,6 +91,8 @@ describe('decideAccess', () => {
             '/api/questions/plm',
             '/api/auth/login',
             '/api/auth/logout',
+            '/api/auth/google',
+            '/auth/callback',
             '/admin/login',
         ]) {
             assert.equal(decideAccess(path, null, allow).type, 'allow', path);
@@ -168,12 +173,68 @@ describe('service role key', () => {
     });
 });
 
+describe('google oauth', () => {
+    it('sends only an allowlisted Google email to the admin panel', () => {
+        assert.equal(googleCallbackDestination('Admin@IAC.com', 'admin@iac.com'), '/admin');
+        assert.equal(googleCallbackDestination('other@gmail.com', 'admin@iac.com'), '/admin/login?error=forbidden');
+        assert.equal(googleCallbackDestination(null, 'admin@iac.com'), '/admin/login?error=forbidden');
+        assert.equal(googleCallbackDestination('admin@iac.com', ''), '/admin/login?error=forbidden');
+    });
+
+    it('only redirects to this project authorize endpoint', () => {
+        const base = 'https://abccompany.supabase.co';
+        assert.equal(
+            isSupabaseAuthorizeUrl(`${base}/auth/v1/authorize?provider=google`, base),
+            true
+        );
+        assert.equal(isSupabaseAuthorizeUrl('https://accounts.google.com/o/oauth2/v2/auth', base), false);
+        assert.equal(isSupabaseAuthorizeUrl('http://abccompany.supabase.co/auth/v1/authorize', base), false);
+        assert.equal(isSupabaseAuthorizeUrl(`${base}/auth/v1/callback`, base), false);
+        assert.equal(isSupabaseAuthorizeUrl('not a url', base), false);
+    });
+
+    it('keeps the OAuth return origin on the public host', () => {
+        assert.equal(
+            publicOriginFrom({
+                requestUrl: 'http://localhost:3000/auth/callback',
+                forwardedHost: 'evil.example',
+                nodeEnv: 'development',
+            }),
+            'http://localhost:3000'
+        );
+        assert.equal(
+            publicOriginFrom({
+                requestUrl: 'http://internal/auth/callback',
+                forwardedHost: 'plataforma-de-madurez.vercel.app',
+                nodeEnv: 'production',
+            }),
+            'https://plataforma-de-madurez.vercel.app'
+        );
+        assert.equal(
+            publicOriginFrom({
+                requestUrl: 'https://plataforma-de-madurez.vercel.app/auth/callback',
+                forwardedHost: 'evil.example/phish',
+                nodeEnv: 'production',
+            }),
+            'https://plataforma-de-madurez.vercel.app'
+        );
+        assert.equal(
+            publicOriginFrom({
+                requestUrl: 'http://localhost:3456/auth/callback',
+                forwardedHost: 'localhost:3456',
+                nodeEnv: 'production',
+            }),
+            'http://localhost:3456'
+        );
+    });
+});
+
 describe('route inventory', () => {
     it('classifies every API route as public or admin', () => {
-        const apiRoot = join(srcRoot, 'app', 'api');
-        const found = walk(apiRoot)
+        const appRoot = join(srcRoot, 'app');
+        const found = walk(appRoot)
             .filter((file) => file.endsWith('route.ts'))
-            .map((file) => relative(apiRoot, file))
+            .map((file) => relative(appRoot, file))
             .sort();
 
         assert.deepEqual(found, Object.keys(API_ROUTE_ACCESS).sort());

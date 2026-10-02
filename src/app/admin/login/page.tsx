@@ -8,6 +8,7 @@ const ERRORS: Record<string, string> = {
     credentials: 'Correo o contraseña incorrectos.',
     invalid: 'Correo y contraseña son obligatorios.',
     config: 'La autenticación no está configurada. Revisa las variables de entorno.',
+    oauth: 'No se pudo completar el ingreso con Google. Intenta de nuevo.',
 };
 
 export default function AdminLoginPage() {
@@ -67,6 +68,22 @@ export default function AdminLoginPage() {
                 <p className="text-sm text-muted mb-6">
                     Solo las cuentas incluidas en la lista de administradores pueden ver los diagnósticos.
                 </p>
+
+                <form action="/api/auth/google" method="post">
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full rounded-2xl border border-border bg-surface text-foreground font-semibold py-3 text-sm hover:bg-surface-alt disabled:opacity-60 transition-colors"
+                    >
+                        Continuar con Google
+                    </button>
+                </form>
+
+                <div className="flex items-center gap-3 my-5">
+                    <span className="h-px flex-1 bg-border" />
+                    <span className="text-xs text-muted">o con correo</span>
+                    <span className="h-px flex-1 bg-border" />
+                </div>
 
                 <form action="/api/auth/login" method="post" onSubmit={handleSubmit} className="space-y-4">
                     <div>

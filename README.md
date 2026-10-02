@@ -47,7 +47,7 @@ Edita `.env.local` con tus credenciales. La plantilla está en `.env.local.examp
 
 ### Panel de administración
 
-`/admin` y `GET /api/assessment` exigen una sesión de Supabase Auth cuyo correo esté en `ADMIN_EMAILS`. Quien responde un diagnóstico no inicia sesión: `/`, `/diagnostico`, `/resultados`, `POST /api/analyze`, `POST /api/report`, `POST /api/send-email` y `GET /api/questions/[service]` siguen siendo públicos.
+`/admin` y `GET /api/assessment` exigen una sesión de Supabase Auth cuyo correo esté en `ADMIN_EMAILS`. El ingreso puede ser con Google o con correo y contraseña; las dos vías usan la misma allowlist. Quien responde un diagnóstico no inicia sesión: `/`, `/diagnostico`, `/resultados`, `POST /api/analyze`, `POST /api/report`, `POST /api/send-email` y `GET /api/questions/[service]` siguen siendo públicos.
 
 La clave anon no puede leer la tabla. La lectura del listado usa la service role **después** de comprobar la allowlist. La autorización no usa `user_metadata` (el usuario puede editarlo).
 
@@ -74,6 +74,28 @@ ROLLBACK;
 6. **Redeploy** para que Vercel tome las variables nuevas.
 7. Sin cookie, `GET /api/assessment` debe responder **401**. `/admin` debe redirigir a `/admin/login`. Un diagnóstico nuevo (sin login) debe seguir guardándose.
 
+#### Ingreso con Google
+
+El botón **Continuar con Google** usa Supabase Auth (`signInWithOAuth`, proveedor `google`) y el intercambio PKCE en `/auth/callback`. El correo de la cuenta de Google tiene que estar en `ADMIN_EMAILS`. Si no lo está, el callback cierra la sesión y muestra «Esta cuenta no tiene acceso de administrador». Esa cuenta no llega a `/admin` ni a `GET /api/assessment`. El correo y la contraseña siguen funcionando.
+
+No hace falta una variable nueva en Vercel: el Client ID y el Client Secret viven solo en Supabase. Hay que redesplegar para publicar la ruta `/auth/callback`.
+
+1. **Google Cloud Console → Google Auth Platform → Branding (pantalla de consentimiento).**
+   - Tipo de usuario: **Internal** si el administrador usa Google Workspace de la empresa. Si no, **External**.
+   - Si queda en estado **Testing**, agrega el correo del administrador en **Test users**. Sin eso Google rechaza el ingreso.
+   - En **Data Access (Scopes)** deja `openid`, `.../auth/userinfo.email` y `.../auth/userinfo.profile`. No agregues scopes sensibles.
+2. **Google Auth Platform → Clients → Create client → Web application.**
+   - **Authorized JavaScript origins:** `https://plataforma-de-madurez.vercel.app` y, para desarrollo, `http://localhost:3000`.
+   - **Authorized redirect URIs:** exactamente `https://<project-ref>.supabase.co/auth/v1/callback`. `<project-ref>` es el subdominio de `NEXT_PUBLIC_SUPABASE_URL` (también sale en Supabase → Authentication → Providers → Google). No pongas aquí la URL de Vercel.
+   - Guarda el **Client ID** y el **Client Secret**.
+3. **Supabase → Authentication → Providers → Google.** Actívalo y pega el Client ID y el Client Secret. No actives *Skip nonce check* (eso es para apps nativas).
+4. **Supabase → Authentication → URL Configuration.**
+   - **Site URL:** `https://plataforma-de-madurez.vercel.app`
+   - **Redirect URLs:** `https://plataforma-de-madurez.vercel.app/auth/callback` y `http://localhost:3000/auth/callback`
+5. **Sigue con el registro público desactivado** (Authentication → Providers → Email → **Allow new users to sign up** en off). Crea antes el usuario en **Authentication → Users → Add user** con el mismo correo de Google y **Auto Confirm User**. Ese correo va en `ADMIN_EMAILS`. Si Google responde que el registro está deshabilitado, falta ese usuario: no actives el registro público.
+6. **Vercel:** no agregues el secreto de Google. Confirma `ADMIN_EMAILS`, `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`, y **Redeploy**.
+7. Prueba: una cuenta de Google que no esté en la lista vuelve al login con el aviso y `GET /api/assessment` sigue en 401 o 403. La cuenta de la lista entra al panel. El formulario de correo y contraseña sigue en la misma pantalla.
+
 ### Base de Datos (Supabase)
 
 La tabla `assessments` guarda cada diagnóstico, incluido nombre, correo y cargo de quien responde. El esquema en producción incluye además `selected_services`.
@@ -94,10 +116,12 @@ src/
 │   │   └── page.tsx          # Dashboard de resultados
 │   ├── admin/
 │   │   └── page.tsx          # Panel de administración
-│   └── api/
-│       ├── analyze/route.ts  # Análisis OpenAI + guardado del diagnóstico
-│       ├── assessment/route.ts # Listado admin (requiere sesión)
-│       └── auth/             # Login y logout del panel
+│   ├── api/
+│   │   ├── analyze/route.ts  # Análisis OpenAI + guardado del diagnóstico
+│   │   ├── assessment/route.ts # Listado admin (requiere sesión)
+│   │   └── auth/             # Login, logout y arranque de Google
+│   └── auth/
+│       └── callback/route.ts # Intercambio PKCE de Google + allowlist
 ├── components/
 │   ├── diagnostic/           # Componentes del diagnóstico
 │   └── results/              # Componentes del dashboard
