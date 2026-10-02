@@ -14,7 +14,9 @@ export async function middleware(request: NextRequest) {
         const url = request.nextUrl.clone();
         url.pathname = decision.pathname;
         url.search = decision.search ? `?${decision.search}` : '';
-        return copySession(response, NextResponse.redirect(url));
+        const redirect = copySession(response, NextResponse.redirect(url));
+        redirect.headers.set('Cache-Control', 'private, no-store');
+        return redirect;
     }
 
     const denied = NextResponse.json(
@@ -28,5 +30,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/admin/:path*', '/api/assessment', '/api/assessment/:path*'],
+    // `/admin/:path*` does not match `/admin` itself on Next.js 14.
+    matcher: ['/admin', '/admin/:path*', '/api/assessment', '/api/assessment/:path*'],
 };

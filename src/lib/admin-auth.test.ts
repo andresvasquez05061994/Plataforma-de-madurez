@@ -190,6 +190,11 @@ describe('route inventory', () => {
         }
     });
 
+    it('matches the admin index, which Next.js 14 omits from /admin/:path*', () => {
+        const middleware = readFileSync(join(srcRoot, 'middleware.ts'), 'utf8');
+        assert.match(middleware, /matcher:\s*\[[^\]]*'\/admin'/);
+    });
+
     it('has no server actions that could bypass the route guard', () => {
         const offenders = walk(srcRoot).filter((file) => {
             if (!/\.(ts|tsx)$/.test(file)) return false;
