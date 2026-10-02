@@ -14,15 +14,31 @@ export default function AdminPage() {
 
     const fetchAssessments = async () => {
         try {
-            const res = await fetch('/api/assessment');
-            if (!res.ok) throw new Error('Error al cargar');
+            const res = await fetch('/api/assessment', { cache: 'no-store' });
+            if (res.status === 401) {
+                window.location.href = '/admin/login';
+                return;
+            }
+            if (res.status === 403) {
+                window.location.href = '/admin/login?error=forbidden';
+                return;
+            }
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(typeof data.error === 'string' ? data.error : 'Error al cargar');
+            }
             const data = await res.json();
             setAssessments(data.assessments || []);
-        } catch {
-            setError('No se pudieron cargar los diagnósticos. Verifica la conexión a Supabase.');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'No se pudieron cargar los diagnósticos.');
         } finally {
             setLoading(false);
         }
+    };
+
+    const logout = async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/admin/login';
     };
 
     const selectedAssessment = assessments.find((a) => a.id === selectedId);
@@ -40,7 +56,12 @@ export default function AdminPage() {
                             <p className="text-xs text-muted">Panel de Administración</p>
                         </div>
                     </div>
-                    <span className="text-sm text-muted">{assessments.length} diagnóstico{assessments.length !== 1 ? 's' : ''}</span>
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm text-muted">{assessments.length} diagnóstico{assessments.length !== 1 ? 's' : ''}</span>
+                        <button type="button" onClick={logout} className="text-sm text-muted hover:text-foreground">
+                            Cerrar sesión
+                        </button>
+                    </div>
                 </div>
             </header>
 

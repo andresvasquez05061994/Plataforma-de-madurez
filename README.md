@@ -29,50 +29,56 @@ La aplicación estará disponible en `http://localhost:3000`.
 
 ### Variables de Entorno
 
-Edita `.env.local` con tus credenciales:
+Edita `.env.local` con tus credenciales. La plantilla está en `.env.local.example`.
 
 | Variable | Descripción | Requerida |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL de tu proyecto Supabase | Para persistencia |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave anon de Supabase | Para persistencia |
-| `ANTHROPIC_API_KEY` | API key de Anthropic (Claude) | Para análisis IA |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase | Para persistencia y login de admin |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave anon (pública). No uses aquí la service role | Para guardar diagnósticos y login |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave `service_role` o Secret key. **Solo servidor**, nunca `NEXT_PUBLIC_` | Para que el admin lea diagnósticos |
+| `ADMIN_EMAILS` | Correos con acceso a `/admin`, separados por coma. Vacío = nadie entra | Para el panel admin |
+| `OPENAI_API_KEY` | API key de OpenAI (`gpt-4o-mini`) | Para análisis IA |
 | `NEXT_PUBLIC_SITE_URL` | URL del sitio (default: localhost:3000) | Opcional |
+| `RESEND_API_KEY` | API key de Resend | Para enviar el reporte por correo |
+| `RESEND_FROM_EMAIL` | Remitente del correo | Opcional |
+| `GOOGLE_SHEET_*` | Hojas publicadas con las preguntas | Opcional (hay preguntas estáticas) |
 
-> **Nota:** La app funciona sin Supabase ni Claude API. Sin ellas, el análisis usa un texto pre-generado y los datos no se persisten.
+> **Nota:** Sin `OPENAI_API_KEY` el análisis usa un texto pregenerado. Sin Supabase los datos no se persisten. El panel `/admin` queda cerrado si faltan `ADMIN_EMAILS` o `SUPABASE_SERVICE_ROLE_KEY`.
+
+### Panel de administración
+
+`/admin` y `GET /api/assessment` exigen una sesión de Supabase Auth cuyo correo esté en `ADMIN_EMAILS`. Quien responde un diagnóstico no inicia sesión: `/`, `/diagnostico`, `/resultados`, `POST /api/analyze`, `POST /api/report`, `POST /api/send-email` y `GET /api/questions/[service]` siguen siendo públicos.
+
+La clave anon no puede leer la tabla. La lectura del listado usa la service role **después** de comprobar la allowlist. La autorización no usa `user_metadata` (el usuario puede editarlo).
+
+#### Después de mergear (Vercel y Supabase)
+
+Esto no se aplica solo. Hay que hacerlo a mano.
+
+1. **Supabase → Authentication → Users → Add user.** Correo y contraseña del administrador. Marca **Auto Confirm User**.
+2. **Supabase → Authentication → Sign In / Providers → Email.** Déjalo activo y desactiva **Allow new users to sign up**, para que nadie se registre con la clave anon.
+3. **Supabase → SQL Editor.** Pega y ejecuta `supabase/migrations/20261002170000_lock_down_assessments_rls.sql`. Reemplaza cualquier política que deje leer `assessments` a `anon` o a todo `authenticated`.
+4. Comprueba el cierre de la tabla (debe fallar con permiso denegado) y vuelve al rol normal:
+
+```sql
+BEGIN;
+SET LOCAL ROLE anon;
+SELECT count(*) FROM public.assessments;
+ROLLBACK;
+```
+
+5. **Vercel → Project → Settings → Environment Variables** (Production y, si aplica, Preview):
+   - `ADMIN_EMAILS` = el mismo correo del paso 1. Varios correos separados por coma.
+   - `SUPABASE_SERVICE_ROLE_KEY` = Supabase → Project Settings → API Keys → `service_role` (secret) o la Secret key `sb_secret_...`. No la marques como pública y no le pongas prefijo `NEXT_PUBLIC_`.
+   - Confirma que `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` ya existen.
+6. **Redeploy** para que Vercel tome las variables nuevas.
+7. Sin cookie, `GET /api/assessment` debe responder **401**. `/admin` debe redirigir a `/admin/login`. Un diagnóstico nuevo (sin login) debe seguir guardándose.
 
 ### Base de Datos (Supabase)
 
-Crea la tabla `assessments` en tu proyecto Supabase:
+La tabla `assessments` guarda cada diagnóstico, incluido nombre, correo y cargo de quien responde. El esquema en producción incluye además `selected_services`.
 
-```sql
-CREATE TABLE assessments (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  company TEXT NOT NULL,
-  industry TEXT,
-  employees TEXT,
-  answers JSONB,
-  scores JSONB,
-  global_score NUMERIC,
-  global_level TEXT,
-  ai_analysis TEXT,
-  contact_name TEXT,
-  contact_email TEXT,
-  contact_role TEXT,
-  objective TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Habilitar RLS
-ALTER TABLE assessments ENABLE ROW LEVEL SECURITY;
-
--- Política para insertar (pública)
-CREATE POLICY "Allow public inserts" ON assessments
-  FOR INSERT WITH CHECK (true);
-
--- Política para leer (solo autenticados, para admin)
-CREATE POLICY "Allow authenticated reads" ON assessments
-  FOR SELECT USING (auth.role() = 'authenticated');
-```
+No des `SELECT` a `anon` ni a cualquier usuario autenticado: cualquiera con la clave anon (pública) podría saltarse `/api/assessment`. La política vigente está en la migración de arriba: inserción pública, sin lectura ni edición por la Data API. El panel lee con la service role.
 
 ## 📁 Estructura del Proyecto
 
@@ -89,8 +95,9 @@ src/
 │   ├── admin/
 │   │   └── page.tsx          # Panel de administración
 │   └── api/
-│       ├── analyze/route.ts  # Endpoint Claude API
-│       └── assessment/route.ts # CRUD Supabase
+│       ├── analyze/route.ts  # Análisis OpenAI + guardado del diagnóstico
+│       ├── assessment/route.ts # Listado admin (requiere sesión)
+│       └── auth/             # Login y logout del panel
 ├── components/
 │   ├── diagnostic/           # Componentes del diagnóstico
 │   └── results/              # Componentes del dashboard
@@ -100,9 +107,9 @@ src/
 │   ├── questions-plm.ts      # Preguntas PLM
 │   └── sections.ts           # Metadatos de secciones
 ├── lib/
+│   ├── admin-auth.ts         # Allowlist de admin y decisión de acceso
 │   ├── scoring.ts            # Cálculo de scores
-│   ├── supabase.ts           # Cliente Supabase
-│   └── pdf-generator.ts      # Generación de PDF
+│   └── supabase/             # Sesión, cliente de cookies y service role
 ├── store/
 │   └── assessment-store.ts   # Estado global (Zustand)
 ├── types/
@@ -115,7 +122,7 @@ src/
 1. **Landing** (`/`) — Seleccionar industria → Iniciar diagnóstico
 2. **Diagnóstico** (`/diagnostico`) — 6 secciones, una pregunta por pantalla
 3. **Resultados** (`/resultados`) — Dashboard con scores, radar chart, análisis IA
-4. **Admin** (`/admin`) — Listado de todos los diagnósticos (requiere Supabase)
+4. **Admin** (`/admin`) — Listado de diagnósticos. Requiere sesión de Supabase y correo en `ADMIN_EMAILS`
 
 ## 🛠️ Personalización
 
@@ -126,7 +133,7 @@ Edita los archivos en `src/data/questions-*.ts` para personalizar las preguntas 
 Modifica `tailwind.config.ts` para cambiar la paleta de colores.
 
 ### Análisis IA
-El prompt del sistema se configura en `src/app/api/analyze/route.ts`.
+El prompt del sistema se configura en `src/app/api/analyze/route.ts` y llama a OpenAI (`gpt-4o-mini`) con `OPENAI_API_KEY`.
 
 ## 📦 Build de Producción
 

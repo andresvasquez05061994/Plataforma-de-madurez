@@ -181,6 +181,7 @@ async function saveToSupabase(
         return 'Optimizado';
     };
 
+    // No encadenar .select(): tras la migración de RLS, anon no puede leer la fila.
     const { error } = await supabase.from('assessments').insert({
         company: answers.generalInfo?.company || '',
         industry: answers.generalInfo?.industry || '',
